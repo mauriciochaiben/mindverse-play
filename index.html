@@ -33,8 +33,8 @@ function challengeMenu(){say('Laboratório cognitivo','Escolha um desafio. A dif
 ])}
 function challenge(type){const level=difficulty(type),item=questionBank[type][level-1];if(type==='memory'){
  say('Memória · Observe','Memorize a sequência por 4 segundos:\n\n'+item.seq.join('  '),[]);
- const started=Date.now();setTimeout(()=>{
-  if(!dialog || Date.now()-started<3500)return;
+ const started=Date.now();const observedTitle='Memória · Observe';setTimeout(()=>{
+  if(!dialog || $('title').textContent!==observedTitle || Date.now()-started<3500)return;
   say('Memória · Responda','Qual sequência você viu?',item.a.map((answer,i)=>[answer,()=>record(type,level,i===item.correct,'A sequência correta era: '+item.seq.join('  '))]));
  },4000);return;
 }
@@ -62,7 +62,7 @@ storyButton.id='story';storyButton.textContent='📚 História';
 aiButton.after(storyButton);
 const info=document.createElement('p');
 info.style.cssText='font-size:13px;color:#a7c5d7;margin:8px 0';
-info.textContent='Fase 3: diálogos adaptativos locais com memória de escolhas. IA generativa online ainda não conectada.';
+info.textContent='Diálogos e escolhas disponíveis no menu. A conexão GPT depende do serviço online.';info.hidden=true;
 $('options').parentNode.after(info);
 const npcRoles={
  Lia:{role:'engenheira',focus:'evidências',greet:'Os dados da rede contam uma história, mas precisamos testá-la.'},
@@ -372,8 +372,8 @@ const quickIds=['npc-ai','gpt-config','gpt-talk'];
 for(const id of quickIds){const el=$(id);if(el)quickActions.append(el)}
 const extraActionIds=['npc-ai','gpt-config','gpt-talk'];
 /* Put optional AI actions inside the menu, leaving interaction on the main surface. */
-for(const el of quickActions.children)gameMenu.append(el);
-for(const el of [storyBtn,campaignBtn,backupBtn,restoreBtn])gameMenu.append(el);
+for(const el of [...quickActions.children])gameMenu.append(el);
+for(const el of [storyBtn,campaignBtn,backupBtn,restoreBtn,cognitiveBtn,progressBtn,storyButton])gameMenu.append(el);
 
 gptTalkBtn.onclick=gptTalk;
 })();</script></body></html>
