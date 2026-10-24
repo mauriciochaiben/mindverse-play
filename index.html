@@ -191,6 +191,7 @@ syncAchievements();
 const gptConfigBtn=document.createElement('button');gptConfigBtn.textContent='⚙️ GPT';$('npc-ai').after(gptConfigBtn);
 const gptTalkBtn=document.createElement('button');gptTalkBtn.textContent='🤖 Falar com GPT';gptConfigBtn.after(gptTalkBtn);
 const endpointKey='mindverse_gpt_backend_url';
+try{if(!localStorage.getItem(endpointKey))localStorage.setItem(endpointKey,'https://mindverse-npc-api.onrender.com')}catch{}
 function getEndpoint(){return(localStorage.getItem(endpointKey)||'').replace(/\/$/,'')}
 function gptConfig(){
  const endpoint=getEndpoint();
