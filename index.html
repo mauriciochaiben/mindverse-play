@@ -231,8 +231,60 @@ async function gptTalk(){
   memory.topics=memory.topics.slice(-8);
   s.npcMemory[p.name]=memory;
   save();
-  say('🤖 '+p.name+' · GPT',data.reply,[['Perguntar novamente',gptTalk],['Diálogo local',presentNPC],['Fechar',close]]);
+  say('🤖 '+p.name+' · GPT',data.reply,[['Perguntar novamente',gptTalk],['Tomar decisão',()=>storyDecisionMenu(p.name)],['Diálogo local',presentNPC],['Fechar',close]]);
  }catch(err){say('GPT indisponível','Não foi possível acessar o backend ('+String(err.message).slice(0,90)+'). O jogo permanece disponível no modo local.',[['Diálogo local',presentNPC],['Configurar conexão',gptConfig],['Fechar',close]])}
 }
+
+/* Narrative engine: player-confirmed decisions only. GPT text cannot execute actions. */
+if(!s.storyActions||typeof s.storyActions!=='object')s.storyActions={};
+const storyActions={
+ Lia:[
+  {id:'lia_audit',label:'Auditar medições antes de agir',trust:1,require:()=>true,result:'Você solicitou uma auditoria independente da rede. Lia registra seu compromisso com evidências.'},
+  {id:'lia_rush',label:'Autorizar reparo sem auditoria',trust:-1,require:()=>true,result:'O reparo foi priorizado, mas Lia alerta que a origem da falha permanece incerta.'}
+ ],
+ Mara:[
+  {id:'mara_verify',label:'Verificar informações antes de divulgar',trust:1,require:()=>true,result:'Mara prepara uma comunicação que separa fatos de hipóteses.'},
+  {id:'mara_publish',label:'Divulgar alerta ainda não confirmado',trust:-2,require:()=>true,result:'O alerta se espalha, mas Mara perde confiança na precisão da mensagem.'}
+ ],
+ Caio:[
+  {id:'caio_triage',label:'Priorizar pacientes vulneráveis',trust:1,require:()=>true,result:'Caio organiza a triagem com foco nos pacientes mais vulneráveis.'},
+  {id:'caio_supplies',label:'Reservar recursos para investigação',trust:-1,require:()=>s.quests.energy===2,result:'Com o hospital estabilizado, recursos são reservados para investigar a falha.'}
+ ],
+ Orin:[
+  {id:'orin_test',label:'Testar o cristal com método científico',trust:1,require:()=>s.items.includes('Cristal'),result:'Orin documenta um protocolo de testes para o cristal.'},
+  {id:'orin_assume',label:'Declarar que o sinal é sabotagem',trust:-2,require:()=>true,result:'A hipótese é divulgada sem confirmação e Orin questiona a conclusão precipitada.'}
+ ]
+};
+function chooseStoryAction(npc,action){
+ if(s.storyActions[action.id])return storyDecisionMenu(npc);
+ if(!action.require())return storyDecisionMenu(npc);
+ s.storyActions[action.id]={npc,at:new Date().toISOString()};
+ if(!s.narrative)s.narrative={trust:{},history:[],ending:null};
+ if(!s.narrative.trust)s.narrative.trust={};
+ if(!Array.isArray(s.narrative.history))s.narrative.history=[];
+ s.narrative.trust[npc]=Math.max(-3,Math.min(5,(s.narrative.trust[npc]||0)+action.trust));
+ s.narrative.history.push({npc,choice:action.id,area:s.area,chapter:s.quests.signal,at:new Date().toISOString()});
+ s.narrative.history=s.narrative.history.slice(-40);
+ if(!Array.isArray(s.choices))s.choices=[];
+ s.choices.push(action.id);s.choices=s.choices.slice(-50);
+ save();
+ say('Decisão registrada · '+npc,action.result+'\nConfiança: '+s.narrative.trust[npc]+'\nA escolha é permanente neste progresso e influencia os próximos diálogos.',[['Ver consequências',storyConsequences],['Voltar ao jogo',close]]);
+}
+function storyDecisionMenu(npc){
+ const options=(storyActions[npc]||[]).filter(a=>!s.storyActions[a.id]&&a.require()).map(a=>[a.label,()=>chooseStoryAction(npc,a)]);
+ options.push(['Ver consequências',storyConsequences],['Fechar',close]);
+ say('Decisões · '+npc,'Escolha uma ação narrativa. As consequências são calculadas pelas regras do jogo, não pelo texto gerado pela IA.',options);
+}
+function storyConsequences(){
+ const completed=Object.keys(s.storyActions||{}).length;
+ const verified=['lia_audit','mara_verify','caio_triage','orin_test'].filter(id=>s.storyActions[id]).length;
+ const reckless=['lia_rush','mara_publish','orin_assume'].filter(id=>s.storyActions[id]).length;
+ const ending=completed<3?'Em desenvolvimento':verified>=3&&reckless===0?'Aliança da Evidência':reckless>=2?'Cidade em Desconfiança':'Equilíbrio Frágil';
+ const trusts=Object.entries(s.narrative.trust||{}).map(([n,v])=>n+': '+v).join(' · ');
+ say('Consequências da história','Decisões: '+completed+'\nCaminho atual: '+ending+'\nConfiança: '+trusts+'\nOs caminhos são projeções narrativas, não diagnósticos cognitivos.',[['Fechar',close]]);
+}
+const storyBtn=document.createElement('button');storyBtn.textContent='📜 Decisões';gptTalkBtn.after(storyBtn);
+storyBtn.onclick=()=>{const p=maps[s.area].npc.find(q=>nearby(q,110));if(p)storyDecisionMenu(p.name);else storyConsequences()};
+
 gptTalkBtn.onclick=gptTalk;
 })();</script></body></html>
