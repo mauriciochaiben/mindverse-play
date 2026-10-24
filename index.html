@@ -1,5 +1,5 @@
-<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MINDVERSE — Fase 2</title><style>
-*{box-sizing:border-box}body{margin:0;background:#0a1326;color:#e7f5ff;font:16px system-ui}main{max-width:960px;margin:auto;padding:12px}h1{font-size:24px;margin:5px 0}canvas{width:100%;aspect-ratio:16/9;touch-action:none;border:2px solid #7da9c2;border-radius:12px;background:#20394b}button{color:#fff;background:#285777;border:1px solid #75abc9;border-radius:10px;padding:11px 14px;font:inherit;min-height:44px}button:active{background:#408eb3}.bar,.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:9px 0}.controls{justify-content:space-between}.pad{display:grid;grid-template-columns:repeat(3,58px);gap:3px}.pad [data-dir=up]{grid-column:2}.pad [data-dir=left]{grid-column:1}.pad [data-dir=down]{grid-column:2}.pad [data-dir=right]{grid-column:3;grid-row:2}.panel{background:#152b43;border:1px solid #517f9b;border-radius:12px;padding:14px;margin:10px 0}.panel h2{margin:0 0 8px;color:#92f4dc;font-size:19px}#options{display:flex;flex-wrap:wrap;gap:8px}#status{color:#d7c887}small{color:#a7c5d7}</style></head><body><main><h1>🧠 MINDVERSE <small>Fase 1 · Alpha RPG</small></h1><div class="bar"><span id="status"></span><span id="stats"></span></div><canvas id="scene" width="960" height="540"></canvas><div class="controls"><div class="pad"><button data-dir="up">▲</button><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div><button id="act">💬 Interagir / Coletar</button></div><div class="bar"><button id="inventory">🎒 Inventário</button><button id="skills">✨ Habilidades</button><button id="quests">📜 Missões</button><button id="map">🗺️ Regiões</button><button id="save">💾 Salvar</button><button id="reset">↻ Reiniciar</button></div><section class="panel"><h2 id="title">Bem-vindo a Nexus</h2><p id="text">Explore com as setas ou tocando no mapa. Converse com personagens, colete objetos e complete missões.</p><div id="options"></div></section><small>Os atributos representam progressão dentro do jogo, não uma avaliação psicométrica.</small></main><script>
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MINDVERSE — Fase 3</title><style>
+*{box-sizing:border-box}body{margin:0;background:#0a1326;color:#e7f5ff;font:16px system-ui}main{max-width:960px;margin:auto;padding:12px}h1{font-size:24px;margin:5px 0}canvas{width:100%;aspect-ratio:16/9;touch-action:none;border:2px solid #7da9c2;border-radius:12px;background:#20394b}button{color:#fff;background:#285777;border:1px solid #75abc9;border-radius:10px;padding:11px 14px;font:inherit;min-height:44px}button:active{background:#408eb3}.bar,.controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:9px 0}.controls{justify-content:space-between}.pad{display:grid;grid-template-columns:repeat(3,58px);gap:3px}.pad [data-dir=up]{grid-column:2}.pad [data-dir=left]{grid-column:1}.pad [data-dir=down]{grid-column:2}.pad [data-dir=right]{grid-column:3;grid-row:2}.panel{background:#152b43;border:1px solid #517f9b;border-radius:12px;padding:14px;margin:10px 0}.panel h2{margin:0 0 8px;color:#92f4dc;font-size:19px}#options{display:flex;flex-wrap:wrap;gap:8px}#status{color:#d7c887}small{color:#a7c5d7}</style></head><body><main><h1>🧠 MINDVERSE <small>Fase 3 · Narrativa adaptativa</small></h1><div class="bar"><span id="status"></span><span id="stats"></span></div><canvas id="scene" width="960" height="540"></canvas><div class="controls"><div class="pad"><button data-dir="up">▲</button><button data-dir="left">◀</button><button data-dir="down">▼</button><button data-dir="right">▶</button></div><button id="act">💬 Interagir / Coletar</button></div><div class="bar"><button id="inventory">🎒 Inventário</button><button id="skills">✨ Habilidades</button><button id="quests">📜 Missões</button><button id="map">🗺️ Regiões</button><button id="save">💾 Salvar</button><button id="reset">↻ Reiniciar</button></div><section class="panel"><h2 id="title">Bem-vindo a Nexus</h2><p id="text">Explore com as setas ou tocando no mapa. Converse com personagens, colete objetos e complete missões.</p><div id="options"></div></section><small>Os atributos representam progressão dentro do jogo, não uma avaliação psicométrica.</small></main><script>
 (()=>{'use strict';const $=id=>document.getElementById(id),c=$('scene'),g=c.getContext('2d'),K='mindverse_phase1_v1',maps=[{name:'Praça de Nexus',color:'#1d4451',npc:[{name:'Lia',x:260,y:175,color:'#84eac7',text:'A rede elétrica precisa de investigação.'},{name:'Mara',x:690,y:200,color:'#f7a2d7',text:'Há boatos sem evidências circulando.'}],item:{name:'Bateria',x:365,y:370},obstacles:[[90,90,140,105],[730,75,140,110],[100,405,150,85],[705,400,140,85]],gate:{x:920,y:270,to:1}},{name:'Distrito Hospitalar',color:'#344656',npc:[{name:'Caio',x:350,y:200,color:'#f9cf8d',text:'Precisamos de uma bateria para os equipamentos de emergência.'}],item:{name:'Kit médico',x:630,y:360},obstacles:[[80,75,170,120],[675,75,170,140],[90,420,170,70]],gate:{x:40,y:270,to:0}},{name:'Bosque dos Sinais',color:'#25483f',npc:[{name:'Orin',x:450,y:155,color:'#b3b3ff',text:'Um sinal estranho atravessa a floresta. Verifique os fatos antes de agir.'}],item:{name:'Cristal',x:700,y:380},obstacles:[[80,90,125,130],[650,90,150,130],[80,395,140,90]],gate:{x:40,y:270,to:0}}];let s={area:0,x:470,y:300,level:1,xp:0,points:0,attrs:{analise:1,estrategia:1,criatividade:1},items:[],quests:{energy:0,signal:0},talked:[],unlocked:[0,1],choices:[]};try{let v=JSON.parse(localStorage.getItem(K)||'null');if(v&&v.attrs&&Array.isArray(v.items))s={...s,...v}}catch{}const keys={};let dest=null,dialog=false;const save=()=>{try{localStorage.setItem(K,JSON.stringify(s))}catch{}};function say(title,text,options=[]){dialog=true;$('title').textContent=title;$('text').textContent=text;$('options').replaceChildren();options.forEach(([label,fn])=>{let b=document.createElement('button');b.textContent=label;b.onclick=fn;$('options').append(b)})}function close(){dialog=false;$('title').textContent='Exploração';$('text').textContent='Explore Nexus. Aproxime-se de personagens, itens ou portais.';$('options').replaceChildren()}function xp(n){s.xp+=n;while(s.xp>=s.level*40){s.xp-=s.level*40;s.level++;s.points+=2}save()}function nearby(p,range=78){return Math.hypot(s.x-p.x,s.y-p.y)<range}function enter(area){if(!s.unlocked.includes(area))return;s.area=area;s.x=area===0?820:120;s.y=290;dest=null;save();say('Região descoberta',maps[area].name,[['Explorar',close]])}function chooseSkill(k){if(s.points<1)return;s.points--;s.attrs[k]++;save();skills()}function skills(){say('Árvore de habilidades','Nível '+s.level+' · XP '+s.xp+'/'+(s.level*40)+' · Pontos livres: '+s.points+'\nAnálise: '+s.attrs.analise+' | Estratégia: '+s.attrs.estrategia+' | Criatividade: '+s.attrs.criatividade, s.points?[['+ Análise',()=>chooseSkill('analise')],['+ Estratégia',()=>chooseSkill('estrategia')],['+ Criatividade',()=>chooseSkill('criatividade')],['Fechar',close]]:[['Fechar',close]])}function inventory(){say('Inventário',s.items.length?s.items.join(' · '):'Você ainda não coletou itens.',[['Fechar',close]])}function quests(){say('Diário de missões','Energia de emergência: '+(s.quests.energy===2?'Concluída':s.quests.energy===1?'Leve a bateria ao Caio':'Encontre a bateria na praça')+'\nSinal fantasma: '+(s.quests.signal===2?'Concluída':s.quests.signal===1?'Investigue o bosque':'Conclua a missão do hospital')+'\nRegiões descobertas: '+s.unlocked.map(i=>maps[i].name).join(', '),[['Fechar',close]])}function interact(){if(dialog){close();return}let m=maps[s.area];let p=m.npc.find(q=>nearby(q));if(p){if(p.name==='Caio'&&s.items.includes('Bateria')&&s.quests.energy!==2){say('Caio — Hospital','A bateria pode estabilizar os equipamentos de triagem.',[['Entregar bateria',()=>{s.items.splice(s.items.indexOf('Bateria'),1);s.quests.energy=2;s.quests.signal=1;if(!s.unlocked.includes(2))s.unlocked.push(2);xp(45);say('Missão concluída','Hospital estabilizado! +45 XP. Bosque dos Sinais desbloqueado.',[['Continuar',close]])}],['Agora não',close]]);return}if(p.name==='Orin'&&s.quests.signal===1){say('Orin — Sinal fantasma','O sinal pode ser interferência ou sabotagem. Como investigar?', [['Comparar registros independentes',()=>{s.choices.push('evidencias');s.quests.signal=2;xp(55);say('Mistério resolvido','Os registros revelam uma falha de telemetria. +55 XP.',[['Continuar',close]])}],['Acusar sem provas',()=>{s.choices.push('boato');s.quests.signal=2;xp(10);say('Consequência','A acusação gerou desconfiança e não esclareceu a falha. +10 XP.',[['Continuar',close]])}],['Voltar',close]]);return}if(!s.talked.includes(p.name)){s.talked.push(p.name);xp(10)}say(p.name,p.text,[['Continuar',close]]);return}if(m.item&&nearby(m.item,55)&&!s.items.includes(m.item.name)){s.items.push(m.item.name);if(m.item.name==='Bateria')s.quests.energy=1;xp(15);say('Item coletado',m.item.name+' adicionado ao inventário. +15 XP.',[['Continuar',close]]);save();return}if(nearby(m.gate,85)){enter(m.gate.to);return}say('Nexus','Aproxime-se de um personagem, item brilhante ou portal.',[['Entendi',close]])}function circle(x,y,r,color){g.fillStyle=color;g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill()}function draw(){let m=maps[s.area];g.fillStyle=m.color;g.fillRect(0,0,960,540);g.fillStyle='#ffffff09';for(let x=0;x<960;x+=42)for(let y=0;y<540;y+=42)g.fillRect(x+2,y+2,38,38);g.fillStyle='#74858d';g.fillRect(0,250,960,80);for(let b of m.obstacles){g.fillStyle='#102535';g.fillRect(b[0]+7,b[1]+7,b[2],b[3]);g.fillStyle=s.area===2?'#3b725b':'#628d9b';g.fillRect(...b)}circle(m.gate.x,m.gate.y,32,'#f5d277');g.fillStyle='#102638';g.textAlign='center';g.font='bold 15px system-ui';g.fillText('PORTAL',m.gate.x,m.gate.y+52);for(let p of m.npc){circle(p.x,p.y+7,19,'#112638');circle(p.x,p.y,17,p.color);g.fillStyle='white';g.fillText(p.name,p.x,p.y-28)}if(m.item&&!s.items.includes(m.item.name)){circle(m.item.x,m.item.y,16+Math.sin(Date.now()/250)*2,'#bbff8d');g.fillStyle='white';g.fillText(m.item.name,m.item.x,m.item.y-29)}circle(s.x,s.y+8,20,'#13283a');circle(s.x,s.y,17,'#88b8ff');g.fillStyle='white';g.fillText('VOCÊ',s.x,s.y-27);g.textAlign='left';g.font='bold 18px system-ui';g.fillText(m.name,18,32)}function collides(x,y){let m=maps[s.area];return x<18||y<18||x>942||y>522||m.obstacles.some(b=>x>b[0]-18&&x<b[0]+b[2]+18&&y>b[1]-18&&y<b[1]+b[3]+18)}let last=0;function tick(t){let dt=Math.min((t-last)/1000||0,.04);last=t;if(!dialog){let dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0);if(dest){let d=Math.hypot(dest.x-s.x,dest.y-s.y);if(d>7){dx=(dest.x-s.x)/d;dy=(dest.y-s.y)/d}else dest=null}let n=Math.hypot(dx,dy);if(n){let nx=s.x+dx/n*180*dt,ny=s.y+dy/n*180*dt;if(!collides(nx,s.y))s.x=nx;if(!collides(s.x,ny))s.y=ny}}draw();$('status').textContent=maps[s.area].name;$('stats').textContent='⭐ Nível '+s.level+' · XP '+s.xp+'/'+(s.level*40)+' · '+s.items.length+' itens';requestAnimationFrame(tick)}requestAnimationFrame(tick);for(let b of document.querySelectorAll('[data-dir]')){let k=b.dataset.dir;b.addEventListener('pointerdown',e=>{b.setPointerCapture(e.pointerId);keys[k]=true;dest=null});for(let event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>keys[k]=false)}c.addEventListener('pointerdown',e=>{let r=c.getBoundingClientRect();dest={x:(e.clientX-r.left)*960/r.width,y:(e.clientY-r.top)*540/r.height};if(dialog)close()});const keyboard={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',a:'left',s:'down',d:'right'};addEventListener('keydown',e=>{if(keyboard[e.key]){keys[keyboard[e.key]]=true;dest=null;e.preventDefault()}if(e.key==='Enter'&&!e.repeat)interact()});addEventListener('keyup',e=>{if(keyboard[e.key])keys[keyboard[e.key]]=false});$('act').onclick=interact;$('inventory').onclick=inventory;$('skills').onclick=skills;$('quests').onclick=quests;$('map').onclick=()=>say('Mapa de Nexus','Escolha uma região desbloqueada.',[...s.unlocked.map(i=>[maps[i].name,()=>enter(i)]),['Cancelar',close]]);$('save').onclick=()=>{save();say('Progresso salvo','Os dados foram salvos neste navegador.',[['Continuar',close]])};$('reset').onclick=()=>{if(confirm('Apagar o progresso e reiniciar?')){localStorage.removeItem(K);location.reload()}};setInterval(save,5000);addEventListener('pagehide',save);say('MINDVERSE · Fase 1','Sprints 03–05: inventário, experiência, habilidades, missões secundárias e regiões conectadas. Colete a bateria na Praça de Nexus e entregue ao Caio no Distrito Hospitalar.',[['Começar',close]]);
 
 /* FASE 2: desafios cognitivos com adaptação local, sem alegações psicométricas */
@@ -48,4 +48,92 @@ function record(type,level,ok,explanation){s.cognition.attempts.push({type,level
 function cognitionProgress(){const all=s.cognition.attempts;const details=Object.keys(labels).map(type=>{const h=historyFor(type);const recent=h.slice(-5);const hits=recent.filter(a=>a.ok).length;return labels[type]+': '+h.length+' tentativas · '+(recent.length?Math.round(hits/recent.length*100)+'% nas últimas '+recent.length:'sem tentativas')+' · próximo nível '+difficulty(type)}).join('\n');say('Progresso cognitivo','Total de tentativas: '+all.length+'\n\n'+details+'\n\nEstas métricas não demonstram transferência para a vida real, nem medem QI.',[['Desafios',challengeMenu],['Fechar',close]])}
 cognitiveBtn.onclick=challengeMenu;progressBtn.onclick=cognitionProgress;
 
+
+/* Fase 3 — NPCs contextuais e narrativa ramificada offline.
+   O motor abaixo usa regras auditáveis, não uma API de modelo generativo. */
+if(!s.narrative || typeof s.narrative!=='object')s.narrative={trust:{Lia:0,Mara:0,Caio:0,Orin:0},history:[],ending:null};
+if(!s.narrative.trust)s.narrative.trust={Lia:0,Mara:0,Caio:0,Orin:0};
+if(!Array.isArray(s.narrative.history))s.narrative.history=[];
+const aiButton=document.createElement('button');
+aiButton.id='npc-ai';aiButton.textContent='🗣️ Conversar com NPC';
+$('quests').after(aiButton);
+const storyButton=document.createElement('button');
+storyButton.id='story';storyButton.textContent='📚 História';
+aiButton.after(storyButton);
+const info=document.createElement('p');
+info.style.cssText='font-size:13px;color:#a7c5d7;margin:8px 0';
+info.textContent='Fase 3: diálogos adaptativos locais com memória de escolhas. IA generativa online ainda não conectada.';
+$('options').parentNode.after(info);
+const npcRoles={
+ Lia:{role:'engenheira',focus:'evidências',greet:'Os dados da rede contam uma história, mas precisamos testá-la.'},
+ Mara:{role:'jornalista',focus:'comunicação',greet:'Uma notícia sem contexto pode mudar toda a cidade.'},
+ Caio:{role:'médico',focus:'cuidado',greet:'Uma boa decisão precisa considerar quem será afetado.'},
+ Orin:{role:'pesquisador',focus:'sinais',greet:'Os padrões do bosque parecem contraditórios.'}
+};
+function presentNPC(){
+ const p=maps[s.area].npc.find(q=>nearby(q,110));
+ if(!p){say('Diálogos de Nexus','Aproxime-se de um personagem para conversar. Os diálogos mudam conforme seu progresso.',[['Fechar',close]]);return}
+ const role=npcRoles[p.name];const trust=s.narrative.trust[p.name]||0;
+ const memory=s.narrative.history.filter(x=>x.npc===p.name).slice(-1)[0];
+ const context=s.quests.signal===2?'Você já investigou o sinal fantasma.':s.quests.energy===2?'O hospital já recebeu energia auxiliar.':'A cidade ainda enfrenta incertezas.';
+ const welcome=role.greet+'\n\n'+context+'\n'+(memory?'Lembro que você escolheu: '+memory.choice+'.':'Ainda não conversamos sobre suas prioridades.')+'\nConfiança: '+trust;
+ say(p.name+' · '+role.role,welcome,[
+ ['Perguntar sobre '+role.focus,()=>npcReply(p.name,'investigar')],
+ ['Pedir conselho sobre o próximo passo',()=>npcReply(p.name,'planejar')],
+ ['Questionar a versão apresentada',()=>npcReply(p.name,'questionar')],
+ ['Encerrar conversa',close]
+ ]);
+}
+function npcReply(name,choice){
+ const trustDelta=choice==='questionar'?0:1;
+ s.narrative.trust[name]=Math.max(-3,Math.min(5,(s.narrative.trust[name]||0)+trustDelta));
+ s.narrative.history.push({npc:name,choice,area:s.area,chapter:s.quests.signal,at:new Date().toISOString()});
+ s.narrative.history=s.narrative.history.slice(-40);
+ const hasKit=s.items.includes('Kit médico'),hasCrystal=s.items.includes('Cristal');
+ const responses={
+ Lia:{
+ investigar:hasCrystal?'O cristal pode interferir nas leituras. Compare medições antes de decidir.':'Procure fontes independentes; uma única leitura pode falhar.',
+ planejar:s.quests.energy===2?'Com o hospital seguro, podemos revisar a telemetria.':'Primeiro mapeie os riscos e depois distribua os recursos.',
+ questionar:'Você tem razão em pedir evidências. Minha hipótese precisa de testes.'
+ },
+ Mara:{
+ investigar:s.choices.includes('boato')?'A acusação anterior não foi sustentada. Precisamos corrigir a informação.':'Confirme origem, data e contexto antes de divulgar qualquer notícia.',
+ planejar:'Uma comunicação transparente deve incluir o que ainda não sabemos.',
+ questionar:'Vou separar fatos confirmados de interpretações e rumores.'
+ },
+ Caio:{
+ investigar:hasKit?'O kit médico ajuda na triagem, mas não resolve a causa do apagão.':'Priorize pacientes vulneráveis sem abandonar a investigação.',
+ planejar:s.quests.energy===2?'A triagem está estável. Podemos apoiar os bairros vizinhos.':'Precisamos de uma fonte auxiliar de energia.',
+ questionar:'Minha prioridade são os pacientes, mas aceito revisar os critérios.'
+ },
+ Orin:{
+ investigar:hasCrystal?'Você encontrou o cristal. Vamos testar se ele altera o sinal.':'O sinal varia com o ambiente; não é prova de sabotagem.',
+ planejar:s.quests.signal===2?'Agora precisamos explicar os resultados para a população.':'Compare padrões em horários e locais diferentes.',
+ questionar:'É saudável desconfiar de conclusões rápidas. Vamos repetir a medição.'
+ }
+ };
+ save();
+ say(name+' · Resposta contextual',responses[name][choice]+'\n\nEsta conversa foi registrada na memória local do personagem.',[['Continuar conversa',presentNPC],['Encerrar',close]]);
+}
+function story(){
+ const trust=Object.entries(s.narrative.trust).map(([n,v])=>n+': '+v).join(' · ');
+ const record=s.narrative.history.slice(-6).map(x=>x.npc+' — '+x.choice).join('\n')||'Nenhuma conversa registrada.';
+ const end=s.narrative.ending?'\n\nDesfecho: '+s.narrative.ending:'';
+ say('Crônicas de Nexus','Estado: '+(s.quests.signal===2?'sinal investigado':s.quests.energy===2?'hospital estabilizado':'crise em andamento')+'\n\nRelações: '+trust+'\n\nMemórias recentes:\n'+record+end,[
+  ['Decidir futuro de Nexus',endingMenu],['Fechar',close]
+ ]);
+}
+function endingMenu(){
+ if(s.quests.signal!==2){say('Capítulo final bloqueado','Conclua a missão do sinal fantasma no Bosque dos Sinais antes de escolher o futuro da cidade.',[['Voltar',story]]);return}
+ if(s.narrative.ending){say('Epílogo','Você decidiu: '+s.narrative.ending,[['Voltar',story]]);return}
+ say('Capítulo 03 · Reconstrução','O conselho solicita sua decisão sobre a reconstrução de Nexus. Como distribuir o poder e a informação?',[
+  ['Criar auditoria pública dos dados',()=>setEnding('Auditoria pública: a cidade escolheu transparência e verificação.')],
+  ['Priorizar serviços essenciais',()=>setEnding('Proteção social: os serviços críticos receberam prioridade.')],
+  ['Delegar decisões aos bairros',()=>setEnding('Governança local: cada bairro passou a decidir parte de seus recursos.')],
+  ['Adiar a decisão',story]
+ ]);
+}
+function setEnding(text){s.narrative.ending=text;xp(70);save();say('Final de temporada',text+'\n\n+70 XP. Suas relações e decisões continuam registradas no diário.',[['Ver crônicas',story],['Explorar',close]])}
+aiButton.onclick=presentNPC;
+storyButton.onclick=story;
 })();</script></body></html>
