@@ -2,6 +2,8 @@
 import os
 import time
 import asyncio
+import sqlite3
+import threading
 from datetime import datetime, timezone
 from collections import defaultdict, deque
 from typing import Literal
@@ -20,6 +22,25 @@ MAX_DAILY_REQUESTS = max(1, int(os.getenv("MAX_DAILY_REQUESTS", "100")))
 MAX_MONTHLY_REQUESTS = max(1, int(os.getenv("MAX_MONTHLY_REQUESTS", "1000")))
 usage = {"day": "", "month": "", "daily": 0, "monthly": 0}
 usage_lock = asyncio.Lock()
+# SQLite is durable only if MINDVERSE_DB_PATH points to a persistent mounted disk.
+DB_PATH = os.getenv("MINDVERSE_DB_PATH", "/tmp/mindverse_usage.sqlite3")
+db_lock = threading.Lock()
+def reserve_quota(today: str):
+    with db_lock:
+        with sqlite3.connect(DB_PATH, timeout=10) as db:
+            db.execute("CREATE TABLE IF NOT EXISTS usage (period TEXT PRIMARY KEY, calls INTEGER NOT NULL)")
+            day, month = "d:" + today, "m:" + today[:7]
+            db.execute("BEGIN IMMEDIATE")
+            counts = {}
+            for period in (day, month):
+                row = db.execute("SELECT calls FROM usage WHERE period=?", (period,)).fetchone()
+                counts[period] = row[0] if row else 0
+            if counts[day] >= MAX_DAILY_REQUESTS or counts[month] >= MAX_MONTHLY_REQUESTS:
+                return False
+            for period in (day, month):
+                db.execute("INSERT INTO usage(period,calls) VALUES(?,1) ON CONFLICT(period) DO UPDATE SET calls=calls+1", (period,))
+            return True
+
 
 NPC = {
     "Lia": "Engenheira cautelosa, orientada por evidências e pela segurança da rede.",
@@ -52,15 +73,12 @@ async def npc_chat(body: ChatInput, request: Request):
         raise HTTPException(status_code=429, detail="Too many requests")
     q.append(now)
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    async with usage_lock:
-        if usage["day"] != today:
-            usage["day"], usage["daily"] = today, 0
-        if usage["month"] != today[:7]:
-            usage["month"], usage["monthly"] = today[:7], 0
-        if usage["daily"] >= MAX_DAILY_REQUESTS or usage["monthly"] >= MAX_MONTHLY_REQUESTS:
-            raise HTTPException(status_code=429, detail="AI quota reached")
-        usage["daily"] += 1
-        usage["monthly"] += 1
+    try:
+        reserved = await asyncio.to_thread(reserve_quota, today)
+    except sqlite3.Error:
+        raise HTTPException(status_code=503, detail="Usage accounting unavailable")
+    if not reserved:
+        raise HTTPException(status_code=429, detail="AI quota reached")
     safe_history = []
     for item in body.history[-6:]:
         role = item.get("role")
