@@ -332,9 +332,9 @@ function campaignOverview(){
  const decisions=Object.keys(s.storyActions||{});
  const evidence=['lia_audit','mara_verify','caio_triage','orin_test','nilo_archive'].filter(id=>s.storyActions[id]).length;
  const risk=['lia_rush','mara_publish','orin_assume','nilo_ignore'].filter(id=>s.storyActions[id]).length;
- const ready=s.quests.energy===2&&s.quests.signal===2&&decisions.length>=3&&s.campaign.attempts>=3;
+ const ready=s.quests.energy===2&&s.quests.signal===2&&s.quests.archive===2&&decisions.length>=3&&s.campaign.attempts>=3;
  const ending=evidence>=3&&risk===0?'Aliança da Evidência':risk>=2?'Cidade em Desconfiança':'Equilíbrio Frágil';
- const message='Hospital: '+(s.quests.energy===2?'✓':'pendente')+' · Sinal: '+(s.quests.signal===2?'✓':'pendente')+'\nDecisões: '+decisions.length+'/3 · Desafios: '+s.campaign.attempts+'/3\nAcertos: '+s.campaign.correct+' · Dificuldade: '+s.campaign.difficulty+'\n'+(s.campaign.completed?'Final alcançado: '+s.campaign.ending:ready?'Final disponível: '+ending:'Conclua as missões, tome 3 decisões e faça 3 desafios para desbloquear o final.');
+ const message='Hospital: '+(s.quests.energy===2?'✓':'pendente')+' · Sinal: '+(s.quests.signal===2?'✓':'pendente')+' · Arquivo: '+(s.quests.archive===2?'✓':'pendente')+'\nDecisões: '+decisions.length+'/3 · Desafios: '+s.campaign.attempts+'/3\nAcertos: '+s.campaign.correct+' · Dificuldade: '+s.campaign.difficulty+'\n'+(s.campaign.completed?'Final alcançado: '+s.campaign.ending:ready?'Final disponível: '+ending:'Conclua as três missões, tome 3 decisões e faça 3 desafios para desbloquear o final.');
  const opts=[['Praticar raciocínio',campaignChallenge]];
  if(ready&&!s.campaign.completed)opts.push(['Concluir campanha',()=>{
  s.campaign.completed=true;s.campaign.ending=ending;
