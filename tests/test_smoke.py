@@ -5,12 +5,13 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 HTML = (ROOT / "index.html").read_text(encoding="utf-8")
+GAME = (ROOT / "assets/game.js").read_text(encoding="utf-8")
 BACKEND = (ROOT / "backend/main.py").read_text(encoding="utf-8")
 
 class SmokeTests(unittest.TestCase):
     def test_five_npcs_in_frontend_and_backend(self):
         for npc in ("Lia", "Mara", "Caio", "Orin", "Nilo"):
-            self.assertIn("name:'" + npc + "'", HTML)
+            self.assertIn("name:'" + npc + "'", GAME)
             self.assertIn('"' + npc + '"', BACKEND)
 
     def test_menu_moves_live_collection_safely(self):
@@ -29,6 +30,14 @@ class SmokeTests(unittest.TestCase):
         self.assertIn("OPENAI_API_KEY", BACKEND)
         self.assertNotIn("sk-proj-", HTML)
         self.assertIn('"store": False', BACKEND)
+
+    def test_modular_assets(self):
+        self.assertIn('src="./assets/game.js"', HTML)
+        self.assertIn('href="./assets/game.css"', HTML)
+
+    def test_third_quest(self):
+        self.assertIn("s.quests.archive===2", GAME)
+        self.assertIn("Arquivo de Nexus", GAME)
 
     def test_local_save_and_tutor(self):
         self.assertIn("localStorage.setItem(K", HTML)
