@@ -329,5 +329,33 @@ function campaignOverview(){
 }
 const campaignBtn=document.createElement('button');campaignBtn.textContent='🏁 Campanha';storyBtn.after(campaignBtn);campaignBtn.onclick=campaignOverview;
 
+
+/* Beta convenience: accessible export/import of local progress */
+function exportProgress(){
+ const payload={format:'mindverse-save',version:1,exportedAt:new Date().toISOString(),state:s};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='mindverse-progresso.json';document.body.append(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),3000);
+ notify('Arquivo de progresso preparado');
+}
+function importProgress(file){
+ if(!file||file.size>1024*1024){notify('Arquivo inválido ou muito grande');return}
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const data=JSON.parse(String(reader.result));
+   if(data.format!=='mindverse-save'||data.version!==1||!data.state||!data.state.attrs||!Array.isArray(data.state.items)||!data.state.quests)throw Error('Formato incompatível');
+   if(!confirm('Substituir o progresso salvo neste navegador?'))return;
+   localStorage.setItem(K,JSON.stringify(data.state));location.reload();
+  }catch(e){notify('Não foi possível importar este progresso')}
+ };
+ reader.readAsText(file);
+}
+const backupBtn=document.createElement('button');backupBtn.textContent='📤 Backup';campaignBtn.after(backupBtn);backupBtn.onclick=exportProgress;
+const restoreBtn=document.createElement('button');restoreBtn.textContent='📥 Restaurar';backupBtn.after(restoreBtn);
+const restoreInput=document.createElement('input');restoreInput.type='file';restoreInput.accept='.json,application/json';restoreInput.style.display='none';document.body.append(restoreInput);
+restoreBtn.onclick=()=>restoreInput.click();restoreInput.onchange=()=>{importProgress(restoreInput.files[0]);restoreInput.value=''};
+
 gptTalkBtn.onclick=gptTalk;
 })();</script></body></html>
