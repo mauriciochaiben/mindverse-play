@@ -15,15 +15,15 @@ class SmokeTests(unittest.TestCase):
             self.assertIn('"' + npc + '"', BACKEND)
 
     def test_menu_moves_live_collection_safely(self):
-        self.assertIn("[...quickActions.children]", HTML)
-        self.assertIn("gameMenu.hidden", HTML)
+        self.assertIn("[...quickActions.children]", GAME)
+        self.assertIn("gameMenu.hidden", GAME)
 
     def test_memory_timer_is_contextual(self):
-        self.assertIn("textContent!==observedTitle", HTML)
+        self.assertIn("textContent!==observedTitle", GAME)
 
     def test_campaign_has_three_endings(self):
         for name in ("Aliança da Evidência", "Cidade em Desconfiança", "Equilíbrio Frágil"):
-            self.assertIn(name, HTML)
+            self.assertIn(name, GAME)
 
     def test_api_has_quota_and_no_key_in_frontend(self):
         self.assertIn("reserve_quota", BACKEND)
@@ -40,8 +40,8 @@ class SmokeTests(unittest.TestCase):
         self.assertIn("Arquivo de Nexus", GAME)
 
     def test_local_save_and_tutor(self):
-        self.assertIn("localStorage.setItem(K", HTML)
-        self.assertIn("function tutorAdvice()", HTML)
+        self.assertIn("localStorage.setItem(K", GAME)
+        self.assertIn("function tutorAdvice()", GAME)
 
 if __name__ == "__main__":
     unittest.main()
