@@ -1,0 +1,398 @@
+(()=>{'use strict';const $=id=>document.getElementById(id),c=$('scene'),g=c.getContext('2d'),K='mindverse_phase1_v1',maps=[{name:'Praça de Nexus',color:'#1d4451',npc:[{name:'Lia',x:260,y:175,color:'#84eac7',text:'A rede elétrica precisa de investigação.'},{name:'Mara',x:690,y:200,color:'#f7a2d7',text:'Há boatos sem evidências circulando.'},{name:'Nilo',x:485,y:185,color:'#f2d3a1',text:'Sou o arquivista de Nexus. A melhor pista é aquela que você consegue verificar.'}],item:{name:'Bateria',x:365,y:370},obstacles:[[90,90,140,105],[730,75,140,110],[100,405,150,85],[705,400,140,85]],gate:{x:920,y:270,to:1}},{name:'Distrito Hospitalar',color:'#344656',npc:[{name:'Caio',x:350,y:200,color:'#f9cf8d',text:'Precisamos de uma bateria para os equipamentos de emergência.'}],item:{name:'Kit médico',x:630,y:360},obstacles:[[80,75,170,120],[675,75,170,140],[90,420,170,70]],gate:{x:40,y:270,to:0}},{name:'Bosque dos Sinais',color:'#25483f',npc:[{name:'Orin',x:450,y:155,color:'#b3b3ff',text:'Um sinal estranho atravessa a floresta. Verifique os fatos antes de agir.'}],item:{name:'Cristal',x:700,y:380},obstacles:[[80,90,125,130],[650,90,150,130],[80,395,140,90]],gate:{x:40,y:270,to:0}}];let s={area:0,x:470,y:300,level:1,xp:0,points:0,attrs:{analise:1,estrategia:1,criatividade:1},items:[],quests:{energy:0,signal:0},talked:[],unlocked:[0,1],choices:[]};try{let v=JSON.parse(localStorage.getItem(K)||'null');if(v&&v.attrs&&Array.isArray(v.items))s={...s,...v}}catch{}const keys={};let dest=null,dialog=false;const save=()=>{try{localStorage.setItem(K,JSON.stringify(s))}catch{}};function say(title,text,options=[]){dialog=true;$('title').textContent=title;$('text').textContent=text;$('options').replaceChildren();options.forEach(([label,fn])=>{let b=document.createElement('button');b.textContent=label;b.onclick=fn;$('options').append(b)})}function close(){dialog=false;$('title').textContent='Exploração';$('text').textContent='Explore Nexus. Aproxime-se de personagens, itens ou portais.';$('options').replaceChildren()}function xp(n){s.xp+=n;while(s.xp>=s.level*40){s.xp-=s.level*40;s.level++;s.points+=2}save()}function nearby(p,range=78){return Math.hypot(s.x-p.x,s.y-p.y)<range}function enter(area){if(!s.unlocked.includes(area))return;s.area=area;s.x=area===0?820:120;s.y=290;dest=null;save();say('Região descoberta',maps[area].name,[['Explorar',close]])}function chooseSkill(k){if(s.points<1)return;s.points--;s.attrs[k]++;save();skills()}function skills(){say('Árvore de habilidades','Nível '+s.level+' · XP '+s.xp+'/'+(s.level*40)+' · Pontos livres: '+s.points+'\nAnálise: '+s.attrs.analise+' | Estratégia: '+s.attrs.estrategia+' | Criatividade: '+s.attrs.criatividade, s.points?[['+ Análise',()=>chooseSkill('analise')],['+ Estratégia',()=>chooseSkill('estrategia')],['+ Criatividade',()=>chooseSkill('criatividade')],['Fechar',close]]:[['Fechar',close]])}function inventory(){say('Inventário',s.items.length?s.items.join(' · '):'Você ainda não coletou itens.',[['Fechar',close]])}function quests(){say('Diário de missões','Energia de emergência: '+(s.quests.energy===2?'Concluída':s.quests.energy===1?'Leve a bateria ao Caio':'Encontre a bateria na praça')+'\nSinal fantasma: '+(s.quests.signal===2?'Concluída':s.quests.signal===1?'Investigue o bosque':'Conclua a missão do hospital')+'\nRegiões descobertas: '+s.unlocked.map(i=>maps[i].name).join(', '),[['Fechar',close]])}function interact(){if(dialog){close();return}let m=maps[s.area];let p=m.npc.find(q=>nearby(q));if(p){if(p.name==='Caio'&&s.items.includes('Bateria')&&s.quests.energy!==2){say('Caio — Hospital','A bateria pode estabilizar os equipamentos de triagem.',[['Entregar bateria',()=>{s.items.splice(s.items.indexOf('Bateria'),1);s.quests.energy=2;s.quests.signal=1;if(!s.unlocked.includes(2))s.unlocked.push(2);xp(45);say('Missão concluída','Hospital estabilizado! +45 XP. Bosque dos Sinais desbloqueado.',[['Continuar',close]])}],['Agora não',close]]);return}if(p.name==='Orin'&&s.quests.signal===1){say('Orin — Sinal fantasma','O sinal pode ser interferência ou sabotagem. Como investigar?', [['Comparar registros independentes',()=>{s.choices.push('evidencias');s.quests.signal=2;xp(55);say('Mistério resolvido','Os registros revelam uma falha de telemetria. +55 XP.',[['Continuar',close]])}],['Acusar sem provas',()=>{s.choices.push('boato');s.quests.signal=2;xp(10);say('Consequência','A acusação gerou desconfiança e não esclareceu a falha. +10 XP.',[['Continuar',close]])}],['Voltar',close]]);return}if(!s.talked.includes(p.name)){s.talked.push(p.name);xp(10)}say(p.name,p.text,[['Continuar',close]]);return}if(m.item&&nearby(m.item,55)&&!s.items.includes(m.item.name)){s.items.push(m.item.name);if(m.item.name==='Bateria')s.quests.energy=1;xp(15);say('Item coletado',m.item.name+' adicionado ao inventário. +15 XP.',[['Continuar',close]]);save();return}if(nearby(m.gate,85)){enter(m.gate.to);return}say('Nexus','Aproxime-se de um personagem, item brilhante ou portal.',[['Entendi',close]])}function circle(x,y,r,color){g.fillStyle=color;g.beginPath();g.arc(x,y,r,0,Math.PI*2);g.fill()}function draw(){let m=maps[s.area];g.fillStyle=m.color;g.fillRect(0,0,960,540);g.fillStyle='#ffffff09';for(let x=0;x<960;x+=42)for(let y=0;y<540;y+=42)g.fillRect(x+2,y+2,38,38);g.fillStyle='#74858d';g.fillRect(0,250,960,80);for(let b of m.obstacles){g.fillStyle='#102535';g.fillRect(b[0]+7,b[1]+7,b[2],b[3]);g.fillStyle=s.area===2?'#3b725b':'#628d9b';g.fillRect(...b)}circle(m.gate.x,m.gate.y,32,'#f5d277');g.fillStyle='#102638';g.textAlign='center';g.font='bold 15px system-ui';g.fillText('PORTAL',m.gate.x,m.gate.y+52);for(let p of m.npc){circle(p.x,p.y+7,19,'#112638');circle(p.x,p.y,17,p.color);g.fillStyle='white';g.fillText(p.name,p.x,p.y-28)}if(m.item&&!s.items.includes(m.item.name)){circle(m.item.x,m.item.y,16+Math.sin(Date.now()/250)*2,'#bbff8d');g.fillStyle='white';g.fillText(m.item.name,m.item.x,m.item.y-29)}circle(s.x,s.y+8,20,'#13283a');circle(s.x,s.y,17,'#88b8ff');g.fillStyle='white';g.fillText('VOCÊ',s.x,s.y-27);g.textAlign='left';g.font='bold 18px system-ui';g.fillText(m.name,18,32)}function collides(x,y){let m=maps[s.area];return x<18||y<18||x>942||y>522||m.obstacles.some(b=>x>b[0]-18&&x<b[0]+b[2]+18&&y>b[1]-18&&y<b[1]+b[3]+18)}let last=0;function tick(t){let dt=Math.min((t-last)/1000||0,.04);last=t;if(!dialog){let dx=(keys.right?1:0)-(keys.left?1:0),dy=(keys.down?1:0)-(keys.up?1:0);if(dest){let d=Math.hypot(dest.x-s.x,dest.y-s.y);if(d>7){dx=(dest.x-s.x)/d;dy=(dest.y-s.y)/d}else dest=null}let n=Math.hypot(dx,dy);if(n){let nx=s.x+dx/n*180*dt,ny=s.y+dy/n*180*dt;if(!collides(nx,s.y))s.x=nx;if(!collides(s.x,ny))s.y=ny}}draw();$('status').textContent=maps[s.area].name;$('stats').textContent='⭐ Nível '+s.level+' · XP '+s.xp+'/'+(s.level*40)+' · '+s.items.length+' itens';requestAnimationFrame(tick)}requestAnimationFrame(tick);for(let b of document.querySelectorAll('[data-dir]')){let k=b.dataset.dir;b.addEventListener('pointerdown',e=>{b.setPointerCapture(e.pointerId);keys[k]=true;dest=null});for(let event of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(event,()=>keys[k]=false)}c.addEventListener('pointerdown',e=>{let r=c.getBoundingClientRect();dest={x:(e.clientX-r.left)*960/r.width,y:(e.clientY-r.top)*540/r.height};if(dialog)close()});const keyboard={ArrowUp:'up',ArrowDown:'down',ArrowLeft:'left',ArrowRight:'right',w:'up',a:'left',s:'down',d:'right'};addEventListener('keydown',e=>{if(keyboard[e.key]){keys[keyboard[e.key]]=true;dest=null;e.preventDefault()}if(e.key==='Enter'&&!e.repeat)interact()});addEventListener('keyup',e=>{if(keyboard[e.key])keys[keyboard[e.key]]=false});$('act').onclick=interact;$('inventory').onclick=inventory;$('skills').onclick=skills;$('quests').onclick=quests;$('map').onclick=()=>say('Mapa de Nexus','Escolha uma região desbloqueada.',[...s.unlocked.map(i=>[maps[i].name,()=>enter(i)]),['Cancelar',close]]);$('save').onclick=()=>{save();say('Progresso salvo','Os dados foram salvos neste navegador.',[['Continuar',close]])};$('reset').onclick=()=>{if(confirm('Apagar o progresso e reiniciar?')){localStorage.removeItem(K);location.reload()}};setInterval(save,5000);addEventListener('pagehide',save);say('MINDVERSE · Fase 1','Sprints 03–05: inventário, experiência, habilidades, missões secundárias e regiões conectadas. Colete a bateria na Praça de Nexus e entregue ao Caio no Distrito Hospitalar.',[['Começar',close]]);
+
+/* FASE 2: desafios cognitivos com adaptação local, sem alegações psicométricas */
+if(!s.cognition || typeof s.cognition!=='object')s.cognition={attempts:[],completed:[]};
+if(!Array.isArray(s.cognition.attempts))s.cognition.attempts=[];
+if(!Array.isArray(s.cognition.completed))s.cognition.completed=[];
+const cognitiveBtn=document.createElement('button');cognitiveBtn.id='cognitive';cognitiveBtn.textContent='🧩 Desafios';$('quests').after(cognitiveBtn);
+const progressBtn=document.createElement('button');progressBtn.id='progress';progressBtn.textContent='📈 Progresso';cognitiveBtn.after(progressBtn);
+const questionBank={
+ logic:[
+  {q:'Se toda ponte azul está fechada e a ponte Norte é azul, o que se conclui?',a:['A ponte Norte está fechada','A ponte Norte está aberta','Não é possível saber'],correct:0,why:'A regra geral também se aplica à ponte Norte.'},
+  {q:'Uma sequência cresce somando 3: 4, 7, 10, 13, ... Qual o próximo?',a:['15','16','17'],correct:1,why:'13 + 3 = 16.'},
+  {q:'Três sinais A, B e C: A vem antes de B; C vem depois de B. Qual ordem é possível?',a:['C, B, A','A, B, C','B, A, C'],correct:1,why:'As duas restrições determinam A, B, C.'}
+ ],
+ critical:[
+  {q:'Uma notícia diz que houve sabotagem, mas não informa a fonte. Qual primeiro passo?',a:['Compartilhar imediatamente','Buscar confirmação independente','Concluir que é falsa'],correct:1,why:'A ausência de fonte exige verificação; não prova verdade nem falsidade.'},
+  {q:'Dois sensores discordam. Qual atitude reduz a chance de erro?',a:['Testar e comparar com outra medição','Escolher o valor mais alto','Ignorar os dois'],correct:0,why:'Uma terceira medição e teste ajudam a identificar falhas.'},
+  {q:'Um relatório mostra correlação entre chuva e apagões. O que isso permite afirmar?',a:['Chuva sempre causa apagões','Há associação, mas causalidade exige investigação','A associação é impossível'],correct:1,why:'Correlação, isoladamente, não estabelece causalidade.'}
+ ],
+ memory:[
+  {seq:['🌙','⚡','🌿'],a:['🌙 ⚡ 🌿','⚡ 🌙 🌿','🌿 ⚡ 🌙'],correct:0},
+  {seq:['🔵','🟨','🔺','🌙'],a:['🔵 🟨 🔺 🌙','🟨 🔵 🔺 🌙','🔵 🔺 🟨 🌙'],correct:0},
+  {seq:['🌿','⚡','🔵','🌙','🔺'],a:['🌿 ⚡ 🔵 🌙 🔺','🌿 🔵 ⚡ 🌙 🔺','⚡ 🌿 🔵 🌙 🔺'],correct:0}
+ ]
+};
+const labels={logic:'Lógica',critical:'Pensamento crítico',memory:'Memória de trabalho'};
+function historyFor(type){return s.cognition.attempts.filter(a=>a.type===type)}
+function difficulty(type){const h=historyFor(type).slice(-3);if(h.length<2)return 1;const accuracy=h.filter(a=>a.ok).length/h.length;const last=h[h.length-1];if(accuracy>=.67&&last.level>=2)return 3;if(accuracy>=.67)return 2;if(accuracy<=.34)return 1;return Math.max(1,Math.min(3,last.level))}
+function challengeMenu(){say('Laboratório cognitivo','Escolha um desafio. A dificuldade se ajusta conforme as respostas anteriores. Os resultados medem apenas desempenho nestas tarefas.',[
+ ...Object.keys(labels).map(type=>[labels[type]+' · Nível '+difficulty(type),()=>challenge(type)]),['Fechar',close]
+])}
+function challenge(type){const level=difficulty(type),item=questionBank[type][level-1];if(type==='memory'){
+ say('Memória · Observe','Memorize a sequência por 4 segundos:\n\n'+item.seq.join('  '),[]);
+ const started=Date.now();const observedTitle='Memória · Observe';setTimeout(()=>{
+  if(!dialog || $('title').textContent!==observedTitle || Date.now()-started<3500)return;
+  say('Memória · Responda','Qual sequência você viu?',item.a.map((answer,i)=>[answer,()=>record(type,level,i===item.correct,'A sequência correta era: '+item.seq.join('  '))]));
+ },4000);return;
+}
+ say(labels[type]+' · Nível '+level,item.q,item.a.map((answer,i)=>[answer,()=>record(type,level,i===item.correct,item.why)]));
+}
+function record(type,level,ok,explanation){s.cognition.attempts.push({type,level,ok,at:new Date().toISOString()});if(s.cognition.attempts.length>300)s.cognition.attempts.shift();
+ const milestone=type+':'+level;
+ if(ok&&!s.cognition.completed.includes(milestone)){s.cognition.completed.push(milestone);xp(10*level)}
+ save();say(ok?'✓ Resposta correta':'↻ Vamos revisar',(ok?'Você acertou. ':'Ainda não foi desta vez. ')+explanation+'\n\nDificuldade da próxima rodada: nível '+difficulty(type)+'.', [['Novo desafio',()=>challenge(type)],['Escolher outra habilidade',challengeMenu],['Fechar',close]]);
+}
+function cognitionProgress(){const all=s.cognition.attempts;const details=Object.keys(labels).map(type=>{const h=historyFor(type);const recent=h.slice(-5);const hits=recent.filter(a=>a.ok).length;return labels[type]+': '+h.length+' tentativas · '+(recent.length?Math.round(hits/recent.length*100)+'% nas últimas '+recent.length:'sem tentativas')+' · próximo nível '+difficulty(type)}).join('\n');say('Progresso cognitivo','Total de tentativas: '+all.length+'\n\n'+details+'\n\nEstas métricas não demonstram transferência para a vida real, nem medem QI.',[['Desafios',challengeMenu],['Fechar',close]])}
+cognitiveBtn.onclick=challengeMenu;progressBtn.onclick=cognitionProgress;
+
+
+/* Fase 3 — NPCs contextuais e narrativa ramificada offline.
+   O motor abaixo usa regras auditáveis, não uma API de modelo generativo. */
+if(!s.narrative || typeof s.narrative!=='object')s.narrative={trust:{Lia:0,Mara:0,Caio:0,Orin:0},history:[],ending:null};
+if(!s.narrative.trust)s.narrative.trust={Lia:0,Mara:0,Caio:0,Orin:0,Nilo:0};
+if(!Number.isFinite(s.narrative.trust.Nilo))s.narrative.trust.Nilo=0;
+if(!Array.isArray(s.narrative.history))s.narrative.history=[];
+const aiButton=document.createElement('button');
+aiButton.id='npc-ai';aiButton.textContent='🗣️ Conversar com NPC';
+$('quests').after(aiButton);
+const storyButton=document.createElement('button');
+storyButton.id='story';storyButton.textContent='📚 História';
+aiButton.after(storyButton);
+const info=document.createElement('p');
+info.style.cssText='font-size:13px;color:#a7c5d7;margin:8px 0';
+info.textContent='Diálogos e escolhas disponíveis no menu. A conexão GPT depende do serviço online.';info.hidden=true;
+$('options').parentNode.after(info);
+const npcRoles={
+ Lia:{role:'engenheira',focus:'evidências',greet:'Os dados da rede contam uma história, mas precisamos testá-la.'},
+ Mara:{role:'jornalista',focus:'comunicação',greet:'Uma notícia sem contexto pode mudar toda a cidade.'},
+ Caio:{role:'médico',focus:'cuidado',greet:'Uma boa decisão precisa considerar quem será afetado.'},
+ Orin:{role:'pesquisador',focus:'sinais',greet:'Os padrões do bosque parecem contraditórios.'},
+ Nilo:{role:'arquivista',focus:'memória e registros',greet:'Cada relato deve ser confrontado com um registro confiável.'}
+};
+function presentNPC(){
+ const p=maps[s.area].npc.find(q=>nearby(q,110));
+ if(!p){say('Diálogos de Nexus','Aproxime-se de um personagem para conversar. Os diálogos mudam conforme seu progresso.',[['Fechar',close]]);return}
+ const role=npcRoles[p.name];const trust=s.narrative.trust[p.name]||0;
+ const memory=s.narrative.history.filter(x=>x.npc===p.name).slice(-1)[0];
+ const context=s.quests.signal===2?'Você já investigou o sinal fantasma.':s.quests.energy===2?'O hospital já recebeu energia auxiliar.':'A cidade ainda enfrenta incertezas.';
+ const welcome=role.greet+'\n\n'+context+'\n'+(memory?'Lembro que você escolheu: '+memory.choice+'.':'Ainda não conversamos sobre suas prioridades.')+'\nConfiança: '+trust;
+ say(p.name+' · '+role.role,welcome,[
+ ['Perguntar sobre '+role.focus,()=>npcReply(p.name,'investigar')],
+ ['Pedir conselho sobre o próximo passo',()=>npcReply(p.name,'planejar')],
+ ['Questionar a versão apresentada',()=>npcReply(p.name,'questionar')],
+ ['Encerrar conversa',close]
+ ]);
+}
+function npcReply(name,choice){
+ const trustDelta=choice==='questionar'?0:1;
+ s.narrative.trust[name]=Math.max(-3,Math.min(5,(s.narrative.trust[name]||0)+trustDelta));
+ s.narrative.history.push({npc:name,choice,area:s.area,chapter:s.quests.signal,at:new Date().toISOString()});
+ s.narrative.history=s.narrative.history.slice(-40);
+ const hasKit=s.items.includes('Kit médico'),hasCrystal=s.items.includes('Cristal');
+ const responses={
+ Lia:{
+ investigar:hasCrystal?'O cristal pode interferir nas leituras. Compare medições antes de decidir.':'Procure fontes independentes; uma única leitura pode falhar.',
+ planejar:s.quests.energy===2?'Com o hospital seguro, podemos revisar a telemetria.':'Primeiro mapeie os riscos e depois distribua os recursos.',
+ questionar:'Você tem razão em pedir evidências. Minha hipótese precisa de testes.'
+ },
+ Mara:{
+ investigar:s.choices.includes('boato')?'A acusação anterior não foi sustentada. Precisamos corrigir a informação.':'Confirme origem, data e contexto antes de divulgar qualquer notícia.',
+ planejar:'Uma comunicação transparente deve incluir o que ainda não sabemos.',
+ questionar:'Vou separar fatos confirmados de interpretações e rumores.'
+ },
+ Caio:{
+ investigar:hasKit?'O kit médico ajuda na triagem, mas não resolve a causa do apagão.':'Priorize pacientes vulneráveis sem abandonar a investigação.',
+ planejar:s.quests.energy===2?'A triagem está estável. Podemos apoiar os bairros vizinhos.':'Precisamos de uma fonte auxiliar de energia.',
+ questionar:'Minha prioridade são os pacientes, mas aceito revisar os critérios.'
+ },
+ Orin:{
+ investigar:hasCrystal?'Você encontrou o cristal. Vamos testar se ele altera o sinal.':'O sinal varia com o ambiente; não é prova de sabotagem.',
+ planejar:s.quests.signal===2?'Agora precisamos explicar os resultados para a população.':'Compare padrões em horários e locais diferentes.',
+ questionar:'É saudável desconfiar de conclusões rápidas. Vamos repetir a medição.'
+ }
+ };
+ save();
+ say(name+' · Resposta contextual',responses[name][choice]+'\n\nEsta conversa foi registrada na memória local do personagem.',[['Continuar conversa',presentNPC],['Encerrar',close]]);
+}
+function story(){
+ const trust=Object.entries(s.narrative.trust).map(([n,v])=>n+': '+v).join(' · ');
+ const record=s.narrative.history.slice(-6).map(x=>x.npc+' — '+x.choice).join('\n')||'Nenhuma conversa registrada.';
+ const end=s.narrative.ending?'\n\nDesfecho: '+s.narrative.ending:'';
+ say('Crônicas de Nexus','Estado: '+(s.quests.signal===2?'sinal investigado':s.quests.energy===2?'hospital estabilizado':'crise em andamento')+'\n\nRelações: '+trust+'\n\nMemórias recentes:\n'+record+end,[
+  ['Decidir futuro de Nexus',endingMenu],['Fechar',close]
+ ]);
+}
+function endingMenu(){
+ if(s.quests.signal!==2){say('Capítulo final bloqueado','Conclua a missão do sinal fantasma no Bosque dos Sinais antes de escolher o futuro da cidade.',[['Voltar',story]]);return}
+ if(s.narrative.ending){say('Epílogo','Você decidiu: '+s.narrative.ending,[['Voltar',story]]);return}
+ say('Capítulo 03 · Reconstrução','O conselho solicita sua decisão sobre a reconstrução de Nexus. Como distribuir o poder e a informação?',[
+  ['Criar auditoria pública dos dados',()=>setEnding('Auditoria pública: a cidade escolheu transparência e verificação.')],
+  ['Priorizar serviços essenciais',()=>setEnding('Proteção social: os serviços críticos receberam prioridade.')],
+  ['Delegar decisões aos bairros',()=>setEnding('Governança local: cada bairro passou a decidir parte de seus recursos.')],
+  ['Adiar a decisão',story]
+ ]);
+}
+function setEnding(text){s.narrative.ending=text;xp(70);save();say('Final de temporada',text+'\n\n+70 XP. Suas relações e decisões continuam registradas no diário.',[['Ver crônicas',story],['Explorar',close]])}
+aiButton.onclick=presentNPC;
+storyButton.onclick=story;
+
+/* Fase 4 — imersão, conquistas, objetivos diários e instalação PWA */
+if(!s.engagement||typeof s.engagement!=='object')s.engagement={achievements:[],daily:{day:'',count:0,claimed:false},sound:false};
+if(!Array.isArray(s.engagement.achievements))s.engagement.achievements=[];
+const today=()=>new Date().toLocaleDateString('en-CA');
+if(!s.engagement.daily||s.engagement.daily.day!==today())s.engagement.daily={day:today(),count:0,claimed:false};
+const f4style=document.createElement('style');f4style.textContent=`
+body{background:radial-gradient(ellipse at 50% 0,#1b3554,#081225 65%);padding-bottom:env(safe-area-inset-bottom)}
+main{padding-left:max(12px,env(safe-area-inset-left));padding-right:max(12px,env(safe-area-inset-right))}
+button{transition:transform .13s,background .13s;cursor:pointer}
+button:focus-visible{outline:3px solid #ffe2a1;outline-offset:2px}
+button:active{transform:scale(.96)}
+canvas{box-shadow:0 10px 32px #0008;display:block}
+#toast-f4{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#123c48;border:1px solid #a2f5d5;padding:12px 16px;border-radius:12px;z-index:20;max-width:90vw;pointer-events:none;box-shadow:0 5px 22px #0009}
+#toast-f4[hidden]{display:none}
+@media(max-width:620px){h1{font-size:21px}.bar{gap:6px}button{font-size:14px;padding:10px}.pad{grid-template-columns:repeat(3,52px)}.controls{gap:12px}}
+`;document.head.append(f4style);
+const toast=document.createElement('div');toast.id='toast-f4';toast.hidden=true;toast.setAttribute('role','status');document.body.append(toast);let toastTimer;
+function notify(msg){toast.textContent=msg;toast.hidden=false;clearTimeout(toastTimer);toastTimer=setTimeout(()=>toast.hidden=true,3500)}
+const achDefs=[
+ {id:'first_step',label:'Primeiros passos',ok:()=>s.talked.length>=1},
+ {id:'collector',label:'Explorador de recursos',ok:()=>s.items.length>=2},
+ {id:'healer',label:'Energia solidária',ok:()=>s.quests.energy===2},
+ {id:'detective',label:'Investigador de Nexus',ok:()=>s.quests.signal===2},
+ {id:'thinker',label:'Mente curiosa',ok:()=>s.cognition&&s.cognition.attempts.length>=3},
+ {id:'social',label:'Conexões humanas',ok:()=>s.narrative&&s.narrative.history.length>=3},
+ {id:'traveler',label:'Mundo aberto',ok:()=>s.unlocked.includes(2)},
+ {id:'finale',label:'Reconstrução',ok:()=>s.narrative&&!!s.narrative.ending}
+];
+function syncAchievements(){let changed=false;for(const a of achDefs)if(!s.engagement.achievements.includes(a.id)&&a.ok()){s.engagement.achievements.push(a.id);changed=true;notify('🏆 Conquista desbloqueada: '+a.label)}if(changed)save()}
+const achBtn=document.createElement('button');achBtn.textContent='🏆 Conquistas';$('story').after(achBtn);
+achBtn.onclick=()=>{syncAchievements();say('Conquistas · '+s.engagement.achievements.length+'/'+achDefs.length,achDefs.map(a=>(s.engagement.achievements.includes(a.id)?'✓ ':'○ ')+a.label).join('\n'),[['Fechar',close]])};
+const dailyBtn=document.createElement('button');dailyBtn.textContent='🎯 Desafio diário';achBtn.after(dailyBtn);
+dailyBtn.onclick=()=>{if(s.engagement.daily.day!==today())s.engagement.daily={day:today(),count:0,claimed:false};const d=s.engagement.daily;say('Missão diária','Conclua três desafios cognitivos hoje.\nProgresso: '+Math.min(d.count,3)+'/3.\nRecompensa: 30 XP (uma vez por dia).',d.count>=3&&!d.claimed?[['Resgatar 30 XP',()=>{d.claimed=true;xp(30);save();notify('🎯 +30 XP por completar a missão diária!');close()}],['Fechar',close]]:[['Ir aos desafios',challengeMenu],['Fechar',close]])};
+const origRecord=record;record=function(type,level,ok,explanation){if(s.engagement.daily.day!==today())s.engagement.daily={day:today(),count:0,claimed:false};s.engagement.daily.count=Math.min(3,s.engagement.daily.count+1);origRecord(type,level,ok,explanation);syncAchievements()};
+const origInteract=interact;interact=function(){origInteract();setTimeout(syncAchievements,0)};
+$('act').onclick=interact;
+const soundBtn=document.createElement('button');soundBtn.textContent='🔇 Som';dailyBtn.after(soundBtn);
+let audioContext=null,oscillator=null,gain=null;
+function stopSound(){if(oscillator){try{oscillator.stop()}catch{}oscillator=null}if(audioContext){audioContext.close().catch(()=>{});audioContext=null}}
+function startSound(){try{audioContext=new (window.AudioContext||window.webkitAudioContext)();oscillator=audioContext.createOscillator();gain=audioContext.createGain();oscillator.type='sine';oscillator.frequency.value=110;gain.gain.value=.012;oscillator.connect(gain).connect(audioContext.destination);oscillator.start()}catch{stopSound();s.engagement.sound=false;notify('Áudio indisponível neste dispositivo')}}
+soundBtn.onclick=()=>{s.engagement.sound=!s.engagement.sound;if(s.engagement.sound)startSound();else stopSound();soundBtn.textContent=s.engagement.sound?'🔊 Som':'🔇 Som';save()};
+s.engagement.sound=false; // Não reproduzir áudio automaticamente no Safari
+const installBtn=document.createElement('button');installBtn.textContent='📲 Instalar';soundBtn.after(installBtn);
+let deferredInstall=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e});
+installBtn.onclick=async()=>{if(deferredInstall){deferredInstall.prompt();deferredInstall=null;return}say('Instalar no dispositivo','No Safari do iPad ou iPhone: toque em Compartilhar e escolha Adicionar à Tela de Início. Em outros navegadores, procure Instalar aplicativo no menu.',[['Entendi',close]])};
+window.addEventListener('pagehide',()=>{stopSound();save()});
+setInterval(syncAchievements,4000);
+syncAchievements();
+
+/* GPT online: backend HTTPS, chave somente no servidor; fallback local. */
+const gptConfigBtn=document.createElement('button');gptConfigBtn.textContent='⚙️ GPT';$('npc-ai').after(gptConfigBtn);
+const gptTalkBtn=document.createElement('button');gptTalkBtn.textContent='🤖 Falar com GPT';gptConfigBtn.after(gptTalkBtn);
+const endpointKey='mindverse_gpt_backend_url';
+try{if(!localStorage.getItem(endpointKey))localStorage.setItem(endpointKey,'https://mindverse-npc-api.onrender.com')}catch{}
+function getEndpoint(){return(localStorage.getItem(endpointKey)||'').replace(/\/$/,'')}
+function gptConfig(){
+ const endpoint=getEndpoint();
+ say('Conexão GPT',endpoint?'Backend configurado: '+endpoint+'\nA chave da OpenAI permanece no servidor.':'Configure a URL HTTPS do backend para habilitar NPCs generativos. Sem backend, use os diálogos locais.',[
+ ['Definir URL do backend',()=>{const value=prompt('URL HTTPS do backend (sem /npc/chat):',endpoint);if(value===null)return gptConfig();try{const u=new URL(value.trim());if(u.protocol!=='https:')throw Error('HTTPS obrigatório');localStorage.setItem(endpointKey,u.origin+u.pathname.replace(/\/$/,''));notify('Backend salvo neste dispositivo');gptConfig()}catch{say('URL inválida','Informe um endereço HTTPS válido.',[['Voltar',gptConfig]])}}],
+ ['Remover URL',()=>{localStorage.removeItem(endpointKey);gptConfig()}],
+ ['Fechar',close]
+ ]);
+}
+gptConfigBtn.onclick=gptConfig;
+async function gptTalk(){
+ const p=maps[s.area].npc.find(q=>nearby(q,110));
+ if(!p){say('GPT · Nexus','Aproxime-se de um dos cinco personagens para conversar.',[['Fechar',close]]);return}
+ const endpoint=getEndpoint();if(!endpoint){say('GPT ainda não conectado','O modo offline está disponível. Configure um backend HTTPS para usar a API do GPT.',[['⚙️ Configurar',gptConfig],['Diálogo local',presentNPC],['Fechar',close]]);return}
+ const message=prompt('O que deseja perguntar a '+p.name+'? (até 500 caracteres)');
+ if(!message||!message.trim())return;
+ if(message.length>500){notify('Mensagem muito longa: máximo 500 caracteres');return}
+ const history=(s.gptHistory&&s.gptHistory[p.name]||[]).slice(-6);
+ if(!s.npcMemory)s.npcMemory={};
+ const memory=s.npcMemory[p.name]||{encounters:0,topics:[],lastSeen:null};
+ if(!Array.isArray(memory.topics))memory.topics=[];
+ if(!Number.isFinite(memory.encounters))memory.encounters=0;
+ const recentChoices=(s.narrative&&s.narrative.history||[]).filter(e=>e.npc===p.name).slice(-4).map(e=>e.choice);
+ const trust=(s.narrative&&s.narrative.trust&&s.narrative.trust[p.name])||0;
+ const memorySummary='Encontros anteriores: '+memory.encounters+'; temas anteriores: '+memory.topics.slice(-5).join(' / ')+'; confiança: '+trust+'; decisões registradas: '+recentChoices.join(', ')+'. ';
+ const storyState='Hospital: '+(s.quests.energy===2?'estabilizado':'pendente')+'; sinal: '+(s.quests.signal===2?'investigado':'não resolvido')+'; escolhas: '+s.choices.slice(-4).join(', ');
+ say('🤖 '+p.name+' está pensando','Consultando o serviço de IA...',[]);
+ try{
+  const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),28000);
+  let response;try{response=await fetch(endpoint+'/npc/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({npc:p.name,message:message.trim(),area:maps[s.area].name,story:(storyState+'; '+memorySummary).slice(0,1200),history}),signal:controller.signal})}finally{clearTimeout(timer)}
+  if(!response.ok)throw Error('HTTP '+response.status);
+  const data=await response.json();if(typeof data.reply!=='string'||!data.reply.trim())throw Error('Resposta vazia');
+  if(!s.gptHistory)s.gptHistory={};if(!Array.isArray(s.gptHistory[p.name]))s.gptHistory[p.name]=[];
+  s.gptHistory[p.name].push({role:'user',content:message.trim()},{role:'assistant',content:data.reply.slice(0,1600)});
+  s.gptHistory[p.name]=s.gptHistory[p.name].slice(-8);
+  memory.encounters+=1;
+  memory.lastSeen=new Date().toISOString();
+  memory.topics.push(message.trim().slice(0,100));
+  memory.topics=memory.topics.slice(-8);
+  s.npcMemory[p.name]=memory;
+  save();
+  say('🤖 '+p.name+' · GPT',data.reply,[['Perguntar novamente',gptTalk],['Tomar decisão',()=>storyDecisionMenu(p.name)],['Diálogo local',presentNPC],['Fechar',close]]);
+ }catch(err){say('GPT indisponível','Não foi possível acessar o backend ('+String(err.message).slice(0,90)+'). O jogo permanece disponível no modo local.',[['Diálogo local',presentNPC],['Configurar conexão',gptConfig],['Fechar',close]])}
+}
+
+/* Narrative engine: player-confirmed decisions only. GPT text cannot execute actions. */
+if(!s.storyActions||typeof s.storyActions!=='object'||Array.isArray(s.storyActions))s.storyActions={};
+const storyActions={
+ Nilo:[{id:'nilo_archive',label:'Comparar arquivos e depoimentos',trust:1,require:()=>true,result:'Nilo encontrou registros contraditórios e ajudou a separar fatos de suposições.'},{id:'nilo_ignore',label:'Ignorar os registros antigos',trust:-1,require:()=>true,result:'Nilo alerta que uma investigação sem histórico pode repetir erros.'}],
+ Lia:[
+  {id:'lia_audit',label:'Auditar medições antes de agir',trust:1,require:()=>true,result:'Você solicitou uma auditoria independente da rede. Lia registra seu compromisso com evidências.'},
+  {id:'lia_rush',label:'Autorizar reparo sem auditoria',trust:-1,require:()=>true,result:'O reparo foi priorizado, mas Lia alerta que a origem da falha permanece incerta.'}
+ ],
+ Mara:[
+  {id:'mara_verify',label:'Verificar informações antes de divulgar',trust:1,require:()=>true,result:'Mara prepara uma comunicação que separa fatos de hipóteses.'},
+  {id:'mara_publish',label:'Divulgar alerta ainda não confirmado',trust:-2,require:()=>true,result:'O alerta se espalha, mas Mara perde confiança na precisão da mensagem.'}
+ ],
+ Caio:[
+  {id:'caio_triage',label:'Priorizar pacientes vulneráveis',trust:1,require:()=>true,result:'Caio organiza a triagem com foco nos pacientes mais vulneráveis.'},
+  {id:'caio_supplies',label:'Reservar recursos para investigação',trust:-1,require:()=>s.quests.energy===2,result:'Com o hospital estabilizado, recursos são reservados para investigar a falha.'}
+ ],
+ Orin:[
+  {id:'orin_test',label:'Testar o cristal com método científico',trust:1,require:()=>s.items.includes('Cristal'),result:'Orin documenta um protocolo de testes para o cristal.'},
+  {id:'orin_assume',label:'Declarar que o sinal é sabotagem',trust:-2,require:()=>true,result:'A hipótese é divulgada sem confirmação e Orin questiona a conclusão precipitada.'}
+ ]
+};
+function chooseStoryAction(npc,action){
+ if(s.storyActions[action.id])return storyDecisionMenu(npc);
+ if(!action.require())return storyDecisionMenu(npc);
+ s.storyActions[action.id]={npc,at:new Date().toISOString()};
+ if(!s.narrative)s.narrative={trust:{},history:[],ending:null};
+ if(!s.narrative.trust)s.narrative.trust={};
+ if(!Array.isArray(s.narrative.history))s.narrative.history=[];
+ s.narrative.trust[npc]=Math.max(-3,Math.min(5,(s.narrative.trust[npc]||0)+action.trust));
+ s.narrative.history.push({npc,choice:action.id,area:s.area,chapter:s.quests.signal,at:new Date().toISOString()});
+ s.narrative.history=s.narrative.history.slice(-40);
+ if(!Array.isArray(s.choices))s.choices=[];
+ s.choices.push(action.id);s.choices=s.choices.slice(-50);
+ save();
+ say('Decisão registrada · '+npc,action.result+'\nConfiança: '+s.narrative.trust[npc]+'\nA escolha é permanente neste progresso e influencia os próximos diálogos.',[['Ver consequências',storyConsequences],['Voltar ao jogo',close]]);
+}
+function storyDecisionMenu(npc){
+ const options=(storyActions[npc]||[]).filter(a=>!s.storyActions[a.id]&&a.require()).map(a=>[a.label,()=>chooseStoryAction(npc,a)]);
+ options.push(['Ver consequências',storyConsequences],['Fechar',close]);
+ say('Decisões · '+npc,'Escolha uma ação narrativa. As consequências são calculadas pelas regras do jogo, não pelo texto gerado pela IA.',options);
+}
+function storyConsequences(){
+ const completed=Object.keys(s.storyActions||{}).length;
+ const verified=['lia_audit','mara_verify','caio_triage','orin_test','nilo_archive'].filter(id=>s.storyActions[id]).length;
+ const reckless=['lia_rush','mara_publish','orin_assume','nilo_ignore'].filter(id=>s.storyActions[id]).length;
+ const ending=completed<3?'Em desenvolvimento':verified>=3&&reckless===0?'Aliança da Evidência':reckless>=2?'Cidade em Desconfiança':'Equilíbrio Frágil';
+ const trusts=Object.entries(s.narrative.trust||{}).map(([n,v])=>n+': '+v).join(' · ');
+ say('Consequências da história','Decisões: '+completed+'\nCaminho atual: '+ending+'\nConfiança: '+trusts+'\nOs caminhos são projeções narrativas, não diagnósticos cognitivos.',[['Fechar',close]]);
+}
+const storyBtn=document.createElement('button');storyBtn.textContent='📜 Decisões';gptTalkBtn.after(storyBtn);
+storyBtn.onclick=()=>{const p=maps[s.area].npc.find(q=>nearby(q,110));if(p)storyDecisionMenu(p.name);else storyConsequences()};
+
+
+/* Alpha campaign and adaptive practice */
+if(!s.campaign||typeof s.campaign!=='object')s.campaign={chapter:1,attempts:0,correct:0,difficulty:1,completed:false};
+if(!Number.isFinite(s.campaign.attempts))s.campaign.attempts=0;
+if(!Number.isFinite(s.campaign.correct))s.campaign.correct=0;
+if(!Number.isFinite(s.campaign.difficulty))s.campaign.difficulty=1;
+function campaignChallenge(){
+ const campaign=s.campaign;
+ const difficulty=Math.max(1,Math.min(5,campaign.difficulty));
+ const round=campaign.attempts%3;
+ let question,answer,wrong,category;
+ if(round===0){
+  category='Lógica';const a=2+difficulty*3+Math.floor(Math.random()*5),b=1+difficulty*2+Math.floor(Math.random()*5);
+  question='A rede registra '+a+' unidades de energia e recebe mais '+b+'. Qual é o total?';
+  answer=a+b;wrong=[answer+2,answer-2];
+ }else if(round===1){
+  category='Padrões';const step=difficulty+2,base=3+difficulty;
+  question='Orin encontrou a sequência '+[0,1,2,3].map(i=>base+i*step).join(', ')+', ... Qual é o próximo número?';
+  answer=base+4*step;wrong=[answer+step,answer-step];
+ }else{
+  category='Pensamento crítico';
+  question='Mara recebeu um rumor sobre o apagão. Qual atitude apresenta a melhor evidência?';
+  answer='Conferir duas fontes independentes';
+  wrong=['Repetir a mensagem mais compartilhada','Aceitar a primeira explicação'];
+ }
+ const options=[answer,...wrong].map(value=>({value,sort:Math.random()})).sort((a,b)=>a.sort-b.sort);
+ say('🧠 '+category+' · nível '+difficulty,question,options.map(({value})=>[String(value),()=>{
+  campaign.attempts++;
+  if(value===answer){campaign.correct++;campaign.difficulty=Math.min(5,campaign.difficulty+1);xp(5);notify('Resposta correta! +5 XP')}
+  else{campaign.difficulty=Math.max(1,campaign.difficulty-1);notify('Resposta incorreta. A dificuldade foi ajustada.')}
+  save();campaignOverview();
+ }]).concat([['Voltar',campaignOverview]]));
+}
+function campaignOverview(){
+ const decisions=Object.keys(s.storyActions||{});
+ const evidence=['lia_audit','mara_verify','caio_triage','orin_test','nilo_archive'].filter(id=>s.storyActions[id]).length;
+ const risk=['lia_rush','mara_publish','orin_assume','nilo_ignore'].filter(id=>s.storyActions[id]).length;
+ const ready=s.quests.energy===2&&s.quests.signal===2&&decisions.length>=3&&s.campaign.attempts>=3;
+ const ending=evidence>=3&&risk===0?'Aliança da Evidência':risk>=2?'Cidade em Desconfiança':'Equilíbrio Frágil';
+ const message='Hospital: '+(s.quests.energy===2?'✓':'pendente')+' · Sinal: '+(s.quests.signal===2?'✓':'pendente')+'\nDecisões: '+decisions.length+'/3 · Desafios: '+s.campaign.attempts+'/3\nAcertos: '+s.campaign.correct+' · Dificuldade: '+s.campaign.difficulty+'\n'+(s.campaign.completed?'Final alcançado: '+s.campaign.ending:ready?'Final disponível: '+ending:'Conclua as missões, tome 3 decisões e faça 3 desafios para desbloquear o final.');
+ const opts=[['Praticar raciocínio',campaignChallenge]];
+ if(ready&&!s.campaign.completed)opts.push(['Concluir campanha',()=>{
+ s.campaign.completed=true;s.campaign.ending=ending;
+ const scenes={
+ 'Aliança da Evidência':'Nexus recupera a confiança. Lia confirma os testes, Mara divulga informações verificadas, Caio reabre a triagem e Nilo preserva as descobertas. A cidade decide manter auditorias públicas.',
+ 'Cidade em Desconfiança':'O hospital volta a funcionar, mas rumores dividem Nexus. Mara exige retratações, Orin questiona as conclusões e os moradores cobram transparência. Você conclui a crise, porém a confiança precisa ser reconstruída.',
+ 'Equilíbrio Frágil':'A energia retorna e os sinais são compreendidos, mas persistem dúvidas. Os líderes concordam em compartilhar registros e criar um conselho de investigação. O futuro de Nexus depende da continuidade das verificações.'
+ };
+ s.narrative.ending=ending;s.narrative.history.push({npc:'Nexus',choice:'Campanha concluída: '+ending,at:new Date().toISOString()});save();
+ say('🏁 '+ending,scenes[ending],[['Ver epílogo',campaignOverview],['Explorar novamente',close]]);
+}]);
+ opts.push(['Fechar',close]);say('📖 Campanha MINDVERSE',message,opts);
+}
+const campaignBtn=document.createElement('button');campaignBtn.textContent='🏁 Campanha';storyBtn.after(campaignBtn);campaignBtn.onclick=campaignOverview;
+
+
+/* Beta convenience: accessible export/import of local progress */
+function exportProgress(){
+ const payload={format:'mindverse-save',version:1,exportedAt:new Date().toISOString(),state:s};
+ const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+ const url=URL.createObjectURL(blob),a=document.createElement('a');
+ a.href=url;a.download='mindverse-progresso.json';document.body.append(a);a.click();a.remove();
+ setTimeout(()=>URL.revokeObjectURL(url),3000);
+ notify('Arquivo de progresso preparado');
+}
+function importProgress(file){
+ if(!file||file.size>1024*1024){notify('Arquivo inválido ou muito grande');return}
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const data=JSON.parse(String(reader.result));
+   if(data.format!=='mindverse-save'||data.version!==1||!data.state||!data.state.attrs||!Array.isArray(data.state.items)||!data.state.quests)throw Error('Formato incompatível');
+   if(!confirm('Substituir o progresso salvo neste navegador?'))return;
+   localStorage.setItem(K,JSON.stringify(data.state));location.reload();
+  }catch(e){notify('Não foi possível importar este progresso')}
+ };
+ reader.readAsText(file);
+}
+const backupBtn=document.createElement('button');backupBtn.textContent='📤 Backup';campaignBtn.after(backupBtn);backupBtn.onclick=exportProgress;
+const restoreBtn=document.createElement('button');restoreBtn.textContent='📥 Restaurar';backupBtn.after(restoreBtn);
+const restoreInput=document.createElement('input');restoreInput.type='file';restoreInput.accept='.json,application/json';restoreInput.style.display='none';document.body.append(restoreInput);
+restoreBtn.onclick=()=>restoreInput.click();restoreInput.onchange=()=>{importProgress(restoreInput.files[0]);restoreInput.value=''};
+
+const menuToggle=$('menu-toggle'),gameMenu=$('game-menu');
+const menuIds=['inventory','skills','quests','map','save','reset'];
+const originalMenuButtons=menuIds.map(id=>$(id));
+menuToggle.addEventListener('click',()=>{gameMenu.hidden=!gameMenu.hidden;menuToggle.setAttribute('aria-expanded',String(!gameMenu.hidden))});
+originalMenuButtons.forEach(btn=>btn.addEventListener('click',()=>{gameMenu.hidden=true;menuToggle.setAttribute('aria-expanded','false')}));
+const quickActions=document.createElement('div');quickActions.className='quick-actions';
+const quickIds=['npc-ai','gpt-config','gpt-talk'];
+for(const id of quickIds){const el=$(id);if(el)quickActions.append(el)}
+const extraActionIds=['npc-ai','gpt-config','gpt-talk'];
+/* Put optional AI actions inside the menu, leaving interaction on the main surface. */
+for(const el of [...quickActions.children])gameMenu.append(el);
+for(const el of [storyBtn,campaignBtn,backupBtn,restoreBtn,cognitiveBtn,progressBtn,storyButton])gameMenu.append(el);
+for(const btn of gameMenu.querySelectorAll('button'))btn.addEventListener('click',()=>{gameMenu.hidden=true;menuToggle.setAttribute('aria-expanded','false')});
+const tutorBtn=document.createElement('button');tutorBtn.textContent='💡 Tutor';gameMenu.append(tutorBtn);
+function tutorAdvice(){
+ const current=maps[s.area].npc.find(q=>nearby(q,110));
+ const next=s.quests.energy!==2?(s.items.includes('Bateria')?'Leve a bateria ao Caio no Distrito Hospitalar.':'Procure a bateria na Praça de Nexus e observe as pistas ao redor.'):(s.quests.signal!==2?'Vá ao Bosque dos Sinais e compare hipóteses com Orin.':'Converse com personagens diferentes, registre decisões e avalie suas consequências.');
+ const advice=current?'Você está perto de '+current.name+'. Pergunte quais evidências sustentam as afirmações e quais informações ainda faltam.':'Para raciocinar melhor, separe fatos observados, hipóteses e conclusões. Teste uma hipótese de cada vez.';
+ say('💡 Tutor de investigação',next+'\\n\\n'+advice+'\\n\\nDica: um erro é uma oportunidade de rever o método, não uma medida da sua inteligência.',[['Abrir desafios',challengeMenu],['Fechar',close]]);
+}
+tutorBtn.onclick=()=>{gameMenu.hidden=true;menuToggle.setAttribute('aria-expanded','false');tutorAdvice()};
+
+gptTalkBtn.onclick=gptTalk;
+})();
