@@ -1,0 +1,19 @@
+{
+  "name": "MINDVERSE — Nexus",
+  "short_name": "MINDVERSE",
+  "description": "RPG de exploração e desafios cognitivos",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a1326",
+  "theme_color": "#0a1326",
+  "lang": "pt-BR",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
