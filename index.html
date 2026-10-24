@@ -292,14 +292,27 @@ if(!s.campaign)s.campaign={chapter:1,attempts:0,correct:0,difficulty:1,completed
 function campaignChallenge(){
  const campaign=s.campaign;
  const difficulty=Math.max(1,Math.min(5,campaign.difficulty));
- const a=2+difficulty*3+Math.floor(Math.random()*5);
- const b=1+difficulty*2+Math.floor(Math.random()*5);
- const answer=a+b;
- const options=[answer,answer+2,answer-2].sort(()=>Math.random()-.5);
- say('🧠 Desafio adaptativo · nível '+difficulty,'A equipe precisa conferir a soma dos sinais '+a+' + '+b+'. Qual resultado é correto?',options.map(value=>[String(value),()=>{
+ const round=campaign.attempts%3;
+ let question,answer,wrong,category;
+ if(round===0){
+  category='Lógica';const a=2+difficulty*3+Math.floor(Math.random()*5),b=1+difficulty*2+Math.floor(Math.random()*5);
+  question='A rede registra '+a+' unidades de energia e recebe mais '+b+'. Qual é o total?';
+  answer=a+b;wrong=[answer+2,answer-2];
+ }else if(round===1){
+  category='Padrões';const step=difficulty+2,base=3+difficulty;
+  question='Orin encontrou a sequência '+[0,1,2,3].map(i=>base+i*step).join(', ')+', ... Qual é o próximo número?';
+  answer=base+4*step;wrong=[answer+step,answer-step];
+ }else{
+  category='Pensamento crítico';
+  question='Mara recebeu um rumor sobre o apagão. Qual atitude apresenta a melhor evidência?';
+  answer='Conferir duas fontes independentes';
+  wrong=['Repetir a mensagem mais compartilhada','Aceitar a primeira explicação'];
+ }
+ const options=[answer,...wrong].map(value=>({value,sort:Math.random()})).sort((a,b)=>a.sort-b.sort);
+ say('🧠 '+category+' · nível '+difficulty,question,options.map(({value})=>[String(value),()=>{
   campaign.attempts++;
-  if(value===answer){campaign.correct++;campaign.difficulty=Math.min(5,campaign.difficulty+1);xp(5);notify('Análise correta! +5 XP')}
-  else{campaign.difficulty=Math.max(1,campaign.difficulty-1);notify('Tente novamente em um desafio mais simples')}
+  if(value===answer){campaign.correct++;campaign.difficulty=Math.min(5,campaign.difficulty+1);xp(5);notify('Resposta correta! +5 XP')}
+  else{campaign.difficulty=Math.max(1,campaign.difficulty-1);notify('Resposta incorreta. A dificuldade foi ajustada.')}
   save();campaignOverview();
  }]).concat([['Voltar',campaignOverview]]));
 }
