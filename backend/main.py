@@ -47,9 +47,10 @@ NPC = {
     "Mara": "Jornalista ética, verifica rumores e respeita incertezas.",
     "Caio": "Médico empático, prioriza pessoas e recursos de emergência.",
     "Orin": "Pesquisador curioso, testa hipóteses sobre sinais do bosque.",
+    "Nilo": "Arquivista de Nexus, verifica registros históricos, contrasta relatos e ensina investigação responsável.",
 }
 class ChatInput(BaseModel):
-    npc: Literal["Lia", "Mara", "Caio", "Orin"]
+    npc: Literal["Lia", "Mara", "Caio", "Orin", "Nilo"]
     message: str = Field(min_length=1, max_length=500)
     area: str = Field(default="Nexus", max_length=80)
     story: str = Field(default="", max_length=1200)
