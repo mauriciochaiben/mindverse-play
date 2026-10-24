@@ -206,7 +206,7 @@ function gptConfig(){
 gptConfigBtn.onclick=gptConfig;
 async function gptTalk(){
  const p=maps[s.area].npc.find(q=>nearby(q,110));
- if(!p){say('GPT · Nexus','Aproxime-se de Lia, Mara, Caio ou Orin para conversar.',[['Fechar',close]]);return}
+ if(!p){say('GPT · Nexus','Aproxime-se de um dos cinco personagens para conversar.',[['Fechar',close]]);return}
  const endpoint=getEndpoint();if(!endpoint){say('GPT ainda não conectado','O modo offline está disponível. Configure um backend HTTPS para usar a API do GPT.',[['⚙️ Configurar',gptConfig],['Diálogo local',presentNPC],['Fechar',close]]);return}
  const message=prompt('O que deseja perguntar a '+p.name+'? (até 500 caracteres)');
  if(!message||!message.trim())return;
@@ -332,7 +332,16 @@ function campaignOverview(){
  const ending=evidence>=3&&risk===0?'Aliança da Evidência':risk>=2?'Cidade em Desconfiança':'Equilíbrio Frágil';
  const message='Hospital: '+(s.quests.energy===2?'✓':'pendente')+' · Sinal: '+(s.quests.signal===2?'✓':'pendente')+'\nDecisões: '+decisions.length+'/3 · Desafios: '+s.campaign.attempts+'/3\nAcertos: '+s.campaign.correct+' · Dificuldade: '+s.campaign.difficulty+'\n'+(s.campaign.completed?'Final alcançado: '+s.campaign.ending:ready?'Final disponível: '+ending:'Conclua as missões, tome 3 decisões e faça 3 desafios para desbloquear o final.');
  const opts=[['Praticar raciocínio',campaignChallenge]];
- if(ready&&!s.campaign.completed)opts.push(['Concluir campanha',()=>{s.campaign.completed=true;s.campaign.ending=ending;save();campaignOverview()}]);
+ if(ready&&!s.campaign.completed)opts.push(['Concluir campanha',()=>{
+ s.campaign.completed=true;s.campaign.ending=ending;
+ const scenes={
+ 'Aliança da Evidência':'Nexus recupera a confiança. Lia confirma os testes, Mara divulga informações verificadas, Caio reabre a triagem e Nilo preserva as descobertas. A cidade decide manter auditorias públicas.',
+ 'Cidade em Desconfiança':'O hospital volta a funcionar, mas rumores dividem Nexus. Mara exige retratações, Orin questiona as conclusões e os moradores cobram transparência. Você conclui a crise, porém a confiança precisa ser reconstruída.',
+ 'Equilíbrio Frágil':'A energia retorna e os sinais são compreendidos, mas persistem dúvidas. Os líderes concordam em compartilhar registros e criar um conselho de investigação. O futuro de Nexus depende da continuidade das verificações.'
+ };
+ s.narrative.ending=ending;s.narrative.history.push({npc:'Nexus',choice:'Campanha concluída: '+ending,at:new Date().toISOString()});save();
+ say('🏁 '+ending,scenes[ending],[['Ver epílogo',campaignOverview],['Explorar novamente',close]]);
+}]);
  opts.push(['Fechar',close]);say('📖 Campanha MINDVERSE',message,opts);
 }
 const campaignBtn=document.createElement('button');campaignBtn.textContent='🏁 Campanha';storyBtn.after(campaignBtn);campaignBtn.onclick=campaignOverview;
