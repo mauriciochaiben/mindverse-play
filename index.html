@@ -386,6 +386,15 @@ const extraActionIds=['npc-ai','gpt-config','gpt-talk'];
 /* Put optional AI actions inside the menu, leaving interaction on the main surface. */
 for(const el of [...quickActions.children])gameMenu.append(el);
 for(const el of [storyBtn,campaignBtn,backupBtn,restoreBtn,cognitiveBtn,progressBtn,storyButton])gameMenu.append(el);
+for(const btn of gameMenu.querySelectorAll('button'))btn.addEventListener('click',()=>{gameMenu.hidden=true;menuToggle.setAttribute('aria-expanded','false')});
+const tutorBtn=document.createElement('button');tutorBtn.textContent='💡 Tutor';gameMenu.append(tutorBtn);
+function tutorAdvice(){
+ const current=maps[s.area].npc.find(q=>nearby(q,110));
+ const next=s.quests.energy!==2?(s.items.includes('Bateria')?'Leve a bateria ao Caio no Distrito Hospitalar.':'Procure a bateria na Praça de Nexus e observe as pistas ao redor.'):(s.quests.signal!==2?'Vá ao Bosque dos Sinais e compare hipóteses com Orin.':'Converse com personagens diferentes, registre decisões e avalie suas consequências.');
+ const advice=current?'Você está perto de '+current.name+'. Pergunte quais evidências sustentam as afirmações e quais informações ainda faltam.':'Para raciocinar melhor, separe fatos observados, hipóteses e conclusões. Teste uma hipótese de cada vez.';
+ say('💡 Tutor de investigação',next+'\\n\\n'+advice+'\\n\\nDica: um erro é uma oportunidade de rever o método, não uma medida da sua inteligência.',[['Abrir desafios',challengeMenu],['Fechar',close]]);
+}
+tutorBtn.onclick=()=>{gameMenu.hidden=true;menuToggle.setAttribute('aria-expanded','false');tutorAdvice()};
 
 gptTalkBtn.onclick=gptTalk;
 })();</script></body></html>
