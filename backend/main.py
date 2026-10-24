@@ -1,6 +1,8 @@
 """MINDVERSE GPT NPC gateway. Deploy on a Python HTTPS host, not GitHub Pages."""
 import os
 import time
+import asyncio
+from datetime import datetime, timezone
 from collections import defaultdict, deque
 from typing import Literal
 
@@ -13,6 +15,12 @@ app = FastAPI(title="MINDVERSE NPC API", version="1.0")
 allowed = [s.strip() for s in os.getenv("ALLOWED_ORIGINS", "https://mauriciochaiben.github.io").split(",") if s.strip()]
 app.add_middleware(CORSMiddleware, allow_origins=allowed, allow_methods=["GET", "POST"], allow_headers=["Content-Type"])
 limits = defaultdict(deque)
+# Limites locais reiniciam em deploy; NÃO são teto financeiro garantido.
+MAX_DAILY_REQUESTS = max(1, int(os.getenv("MAX_DAILY_REQUESTS", "100")))
+MAX_MONTHLY_REQUESTS = max(1, int(os.getenv("MAX_MONTHLY_REQUESTS", "1000")))
+usage = {"day": "", "month": "", "daily": 0, "monthly": 0}
+usage_lock = asyncio.Lock()
+
 NPC = {
     "Lia": "Engenheira cautelosa, orientada por evidências e pela segurança da rede.",
     "Mara": "Jornalista ética, verifica rumores e respeita incertezas.",
@@ -43,6 +51,16 @@ async def npc_chat(body: ChatInput, request: Request):
     if len(q) >= 15:
         raise HTTPException(status_code=429, detail="Too many requests")
     q.append(now)
+    today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+    async with usage_lock:
+        if usage["day"] != today:
+            usage["day"], usage["daily"] = today, 0
+        if usage["month"] != today[:7]:
+            usage["month"], usage["monthly"] = today[:7], 0
+        if usage["daily"] >= MAX_DAILY_REQUESTS or usage["monthly"] >= MAX_MONTHLY_REQUESTS:
+            raise HTTPException(status_code=429, detail="AI quota reached")
+        usage["daily"] += 1
+        usage["monthly"] += 1
     safe_history = []
     for item in body.history[-6:]:
         role = item.get("role")
