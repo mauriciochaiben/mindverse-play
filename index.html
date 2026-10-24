@@ -210,16 +210,27 @@ async function gptTalk(){
  if(!message||!message.trim())return;
  if(message.length>500){notify('Mensagem muito longa: máximo 500 caracteres');return}
  const history=(s.gptHistory&&s.gptHistory[p.name]||[]).slice(-6);
+ if(!s.npcMemory)s.npcMemory={};
+ const memory=s.npcMemory[p.name]||{encounters:0,topics:[],lastSeen:null};
+ const recentChoices=(s.narrative&&s.narrative.history||[]).filter(e=>e.npc===p.name).slice(-4).map(e=>e.choice);
+ const trust=(s.narrative&&s.narrative.trust&&s.narrative.trust[p.name])||0;
+ const memorySummary='Encontros anteriores: '+memory.encounters+'; temas anteriores: '+memory.topics.slice(-5).join(' / ')+'; confiança: '+trust+'; decisões registradas: '+recentChoices.join(', ')+'. ';
  const storyState='Hospital: '+(s.quests.energy===2?'estabilizado':'pendente')+'; sinal: '+(s.quests.signal===2?'investigado':'não resolvido')+'; escolhas: '+s.choices.slice(-4).join(', ');
  say('🤖 '+p.name+' está pensando','Consultando o serviço de IA...',[]);
  try{
   const controller=new AbortController();const timer=setTimeout(()=>controller.abort(),28000);
-  let response;try{response=await fetch(endpoint+'/npc/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({npc:p.name,message:message.trim(),area:maps[s.area].name,story:storyState,history}),signal:controller.signal})}finally{clearTimeout(timer)}
+  let response;try{response=await fetch(endpoint+'/npc/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({npc:p.name,message:message.trim(),area:maps[s.area].name,story:(storyState+'; '+memorySummary).slice(0,1200),history}),signal:controller.signal})}finally{clearTimeout(timer)}
   if(!response.ok)throw Error('HTTP '+response.status);
   const data=await response.json();if(typeof data.reply!=='string'||!data.reply.trim())throw Error('Resposta vazia');
   if(!s.gptHistory)s.gptHistory={};if(!Array.isArray(s.gptHistory[p.name]))s.gptHistory[p.name]=[];
   s.gptHistory[p.name].push({role:'user',content:message.trim()},{role:'assistant',content:data.reply.slice(0,1600)});
-  s.gptHistory[p.name]=s.gptHistory[p.name].slice(-8);save();
+  s.gptHistory[p.name]=s.gptHistory[p.name].slice(-8);
+  memory.encounters+=1;
+  memory.lastSeen=new Date().toISOString();
+  memory.topics.push(message.trim().slice(0,100));
+  memory.topics=memory.topics.slice(-8);
+  s.npcMemory[p.name]=memory;
+  save();
   say('🤖 '+p.name+' · GPT',data.reply,[['Perguntar novamente',gptTalk],['Diálogo local',presentNPC],['Fechar',close]]);
  }catch(err){say('GPT indisponível','Não foi possível acessar o backend ('+String(err.message).slice(0,90)+'). O jogo permanece disponível no modo local.',[['Diálogo local',presentNPC],['Configurar conexão',gptConfig],['Fechar',close]])}
 }
